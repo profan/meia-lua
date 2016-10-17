@@ -57,8 +57,4 @@
        ])))
 
 (tokenize (open-input-string "for value, other_value in pairs({12, 24}) do 25 = 32 end"))
-(define vars (tokenize (open-input-string "var, var, var")))
-vars
-(parse vars)
-
-(parse (tokenize (open-input-string "function hello_world() return nil end")))
+(parse (tokenize (open-input-string "function hello_world() return false end")))
