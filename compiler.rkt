@@ -26,6 +26,7 @@
       [#"break" (token 'BREAK str)]
       [#"return" (token 'RETURN str)]
       [#"function" (token 'FUNCTION str)]
+      [#"..." (token 'VARIADIC str)]
       [#"local" (token 'LOCAL str)]
       [#"true" (token 'TRUE str)]
       [#"false" (token 'FALSE str)]
@@ -47,6 +48,7 @@
       [#"~=" (token 'NEQ str)]
       [#"and" (token 'AND str)]
       [#"or" (token 'OR str)]
+      [#"#" (token 'HASH str)]
       [#":" (token 'COLON str)]
       [#";" (token 'SEMICOLON str)]
       [else
