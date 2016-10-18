@@ -56,4 +56,4 @@ fieldsep: COMMA | SEMICOLON
 
 binop: ADD | SUB | MUL | DIV | POW | MOD | CONCAT | LT | LTEQ | GT | GTEQ | EQEQ | NEQ | AND | OR
 
-unop: SUB | NOT | LEN
+unop: SUB | NOT | HASH
