@@ -4,7 +4,7 @@
 (require "grammar.rkt")
 
 (define (tokenize p)
-  (for/list ([str (regexp-match* #px"(\\p{L}|\\_)+|\\p{N}+|[\\=\\,\\(\\)\\{\\}\\+\\-\\*\\/]" p)])
+  (for/list ([str (regexp-match* #px"\"[^\"]+\"|(\\p{L}|\\_)+|\\p{N}+|[\\=\\,\\(\\)\\{\\}\\+\\-\\*\\/]" p)])
     (match str
       [#"(" (token 'LPAREN str)]
       [#")" (token 'RPAREN str)]
@@ -52,11 +52,15 @@
       [#":" (token 'COLON str)]
       [#";" (token 'SEMICOLON str)]
       [else
-       (let ([n (string->number (bytes->string/utf-8 str))])
+       (let* ([utf-str (bytes->string/utf-8 str)]
+             [n (string->number utf-str)])
          (match n
            [(? number?) (token 'NUM n)]
-           [else (token 'VAR str)]))
-       ])))
+           [_
+            (cond
+              [(string-prefix? utf-str "\"") (token 'STR (string-trim utf-str "\""))]
+              [else (token 'VAR utf-str)])]))])))
 
 (tokenize (open-input-string "for value, other_value in pairs({12, 24}) do 25 = 32 end"))
+(tokenize (open-input-string "function test() return \"Hello, World!\" end"))
 (parse (tokenize (open-input-string "function hello_world() return false end")))

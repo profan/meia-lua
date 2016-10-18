@@ -32,13 +32,13 @@ namelist: VAR (COMMA VAR)*
 
 explist: (exp COMMA)* exp
 
-exp: NIL | FALSE | TRUE | NUM | VARIADIC | FUNCTION | prefixexp | tableconstructor | exp binop exp | unop exp
+exp: NIL | FALSE | TRUE | NUM | STR | VARIADIC | FUNCTION | prefixexp | tableconstructor | exp binop exp | unop exp
 
 prefixexp: var | functioncall | LPAREN exp RPAREN
 
 functioncall: prefixexp args | prefixexp COLON VAR args
 
-args: LPAREN [explist] RPAREN | tableconstructor
+args: LPAREN [explist] RPAREN | tableconstructor | STR
 
 function: FUNCTION funcbody
 
