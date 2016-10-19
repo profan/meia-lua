@@ -69,9 +69,9 @@
       [(hash-has-key? keywords str) (token (car (hash-ref keywords str)))]
       [else
        (let* ([n (string->number str)])
-         (match n
-           [(? number?) (token 'NUM n)]
-           [_
+         (cond
+           [(number? n) (token 'NUM n)]
+           [else
             (cond
               [(string-prefix? str "\"") (token 'STR (string-trim str "\""))]
               [else (token 'VAR str)])]))])))
