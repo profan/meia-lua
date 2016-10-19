@@ -4,112 +4,69 @@
 (require "grammar.rkt")
 
 (define operators
-  '(("+" 'ADD)
-    ("-" 'SUB)
-    ("*" 'MUL)
-    ("/" 'DIV)
-    ("^" 'POW)
-    ("%" 'MOD)
-    ("(" 'LPAREN)
-    (")" 'RPAREN)
-    ("{" 'LBRACKET)
-    ("}" 'RBRACKET)
-    ("[" 'LSQUARE)
-    ("]" 'RSQUARE)
-    ("<" 'LT)
-    ("<=" 'LTEQ)
-    (">" 'GT)
-    (">=" 'GTEQ)
-    ("==" 'EQEQ)
-    ("~=" 'NEQ)
-    ("..." 'VARIADIC)
-    (".." 'CONCAT)
-    (";" 'SEMICOLON)
-    ("." 'PERIOD)
-    ("," 'COMMA)
-    ("#" 'LEN)
-    ("=" 'EQ)))
+  (make-hash
+   '(("+" ADD)
+     ("-" SUB)
+     ("*" MUL)
+     ("/" DIV)
+     ("^" POW)
+     ("%" MOD)
+     ("(" LPAREN)
+     (")" RPAREN)
+     ("{" LBRACKET)
+     ("}" RBRACKET)
+     ("[" LSQUARE)
+     ("]" RSQUARE)
+     ("<" LT)
+     ("<=" LTEQ)
+     (">" GT)
+     (">=" GTEQ)
+     ("==" EQEQ)
+     ("~=" NEQ)
+     ("..." VARIADIC)
+     (".." CONCAT)
+     (";" SEMICOLON)
+     ("." PERIOD)
+     ("," COMMA)
+     ("#" LEN)
+     ("=" EQ))))
 
 (define keywords
-  '(("if" 'IF)
-    ("else" 'ELSE)
-    ("elseif" 'ELSEIF)
-    ("for" 'FOR)
-    ("while" 'WHILE)
-    ("repeat" 'REPEAT)
-    ("until" 'UNTIL)
-    ("in" 'IN)
-    ("do" 'DO)
-    ("then" 'THEN)
-    ("end" 'END)
-    ("break" 'BREAK)
-    ("return" 'RETURN)
-    ("function" 'FUNCTION)
-    ("local" 'LOCAL)
-    ("true" 'TRUE)
-    ("false" 'FALSE)
-    ("nil" 'NIL)
-    ("and" 'AND)
-    ("or" 'OR)
-    ("not" 'NOT)))
+  (make-hash
+   '(("if" IF)
+     ("else" ELSE)
+     ("elseif" ELSEIF)
+     ("for" FOR)
+     ("while" WHILE)
+     ("repeat" REPEAT)
+     ("until" UNTIL)
+     ("in" IN)
+     ("do" DO)
+     ("then" THEN)
+     ("end" END)
+     ("break" BREAK)
+     ("return" RETURN)
+     ("function" FUNCTION)
+     ("local" LOCAL)
+     ("true" TRUE)
+     ("false" FALSE)
+     ("nil" NIL)
+     ("and" AND)
+     ("or" OR)
+     ("not" NOT))))
 
 (define (expand-operators ops)
   (for/fold ([str ""])
             ([op ops])
-    (string-append str (format "\\~a" (car op)))))
+    (string-append str (format "\\~a" op))))
 
 (define (tokenize p)
-  (define ex-ops (expand-operators operators))
+  (define ex-ops (expand-operators (hash-keys operators)))
   (for/list ([b-str (regexp-match* (pregexp (format "\"[^\"]+\"|(\\p{L}|\\_)+|\\p{N}+|[~a]" ex-ops)) p)])
     (define str (bytes->string/utf-8 b-str))
-    (match str
-      ["(" (token 'LPAREN str)]
-      [")" (token 'RPAREN str)]
-      ["[" (token 'LSQUARE str)]
-      ["]" (token 'RSQUARE str)]
-      ["{" (token 'LBRACKET str)]
-      ["}" (token 'RBRACKET str)]
-      ["if" (token 'IF str)]
-      ["else" (token 'ELSE str)]
-      ["elseif" (token 'ELSEIF str)]
-      ["for" (token 'FOR str)]
-      ["while" (token 'WHILE str)]
-      ["repeat" (token 'REPEAT str)]
-      ["until" (token 'UNTIL str)]
-      ["in" (token 'IN str)]
-      ["do" (token 'DO str)]
-      ["then" (token 'THEN str)]
-      ["end" (token 'END str)]
-      ["break" (token 'BREAK str)]
-      ["return" (token 'RETURN str)]
-      ["function" (token 'FUNCTION str)]
-      ["..." (token 'VARIADIC str)]
-      ["local" (token 'LOCAL str)]
-      ["true" (token 'TRUE str)]
-      ["false" (token 'FALSE str)]
-      ["nil" (token 'NIL str)]
-      ["." (token 'PERIOD str)]
-      ["," (token 'COMMA str)]
-      ["+" (token 'ADD str)]
-      ["-" (token 'SUB str)]
-      ["*" (token 'MUL str)]
-      ["/" (token 'DIV str)]
-      ["^" (token 'POW str)]
-      ["%" (token 'MOD str)]
-      ["=" (token 'EQ str)]
-      [".." (token 'CONCAT str)]
-      ["<" (token 'LT str)]
-      ["<=" (token 'LTEQ str)]
-      [">" (token 'GT str)]
-      [">=" (token 'GTEQ str)]
-      ["==" (token 'EQEQ str)]
-      ["~=" (token 'NEQ str)]
-      ["and" (token 'AND str)]
-      ["or" (token 'OR str)]
-      ["not" (token 'NOT str)]
-      ["#" (token 'LEN str)]
-      [":" (token 'COLON str)]
-      [";" (token 'SEMICOLON str)]
+    (cond
+      [(hash-has-key? operators str) (token (car (hash-ref operators str)))]
+      [(hash-has-key? keywords str) (token (car (hash-ref keywords str)))]
       [else
        (let* ([n (string->number str)])
          (match n
