@@ -56,8 +56,7 @@
      ("not" NOT))))
 
 (define (expand-operators ops)
-  (for/fold ([str ""])
-            ([op ops])
+  (for/fold ([str ""]) ([op ops])
     (string-append str (format "\\~a" op))))
 
 (define (tokenize p)
