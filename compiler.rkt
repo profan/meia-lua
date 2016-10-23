@@ -67,8 +67,8 @@
   (for/list ([b-str (regexp-match* (pregexp (format "\"[^\"]+\"|~a|\\p{N}+|[~a]" id-regexp ex-ops)) p)])
     (define str (bytes->string/utf-8 b-str))
     (cond
-      [(hash-has-key? operators str) (token (car (hash-ref operators str)))]
-      [(hash-has-key? keywords str) (token (car (hash-ref keywords str)))]
+      [(hash-has-key? operators str) (token (car (hash-ref operators str)) str)]
+      [(hash-has-key? keywords str) (token (car (hash-ref keywords str)) str)]
       [else
        (let* ([n (string->number str)])
          (cond
@@ -105,7 +105,7 @@
   (Expr (e body)
         c ;; constant
         x ;; variable
-        (op o e0 e1))
+        (binop o e0 e1))
   (Stmt (s body)
         (assign x e)
         (fn n body)
@@ -121,7 +121,7 @@
 (define-pass lower-op-assign : L1 (ir) -> L0 ()
   (definitions)
   (Stmt : Stmt (ir) -> Stmt ()
-        [(op-assign ,o ,x ,[e]) `(assign x (op o x e))])
+        [(op-assign ,o ,x ,[e]) `(assign x (binop o x e))])
   (Stmt ir))
 
 (language->s-expression L0)
