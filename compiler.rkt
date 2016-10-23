@@ -139,4 +139,5 @@
 (debug-print-data "function test() local some_stuff = {1, 2, 3, 4}; return #some_stuff end")
 (debug-print-data "function hello_world() return false end")
 (debug-print-data "function hello_world() return not -25 end")
+(debug-print-data "local x, y, z = 16, 24, 32")
 (debug-print-data "local thing = 25 + 35")
