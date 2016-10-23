@@ -2,6 +2,7 @@
 
 (require brag/support)
 (require "grammar.rkt")
+(require syntax/parse)
 
 (define operators
   (make-hash
@@ -59,9 +60,11 @@
   (for/fold ([str ""]) ([op ops])
     (string-append str (format "\\~a" op))))
 
+(define id-regexp "(\\p{L}|\\_)+")
+
 (define (tokenize p)
   (define ex-ops (expand-operators (hash-keys operators)))
-  (for/list ([b-str (regexp-match* (pregexp (format "\"[^\"]+\"|(\\p{L}|\\_)+|\\p{N}+|[~a]" ex-ops)) p)])
+  (for/list ([b-str (regexp-match* (pregexp (format "\"[^\"]+\"|~a|\\p{N}+|[~a]" id-regexp ex-ops)) p)])
     (define str (bytes->string/utf-8 b-str))
     (cond
       [(hash-has-key? operators str) (token (car (hash-ref operators str)))]
@@ -75,13 +78,17 @@
               [(string-prefix? str "\"") (token 'STR (string-trim str "\""))]
               [else (token 'VAR str)])]))])))
 
-(define (variable? x)
-  (symbol? x))
+(define (name? n)
+  (define id-p (pregexp id-regexp))
+  (regexp-match-exact? id-p n))
 
 (define (constant? x)
   (or (number? x)
       (string? x)
       (char? x)))
+
+(define (variable? x)
+  (symbol? x))
 
 (define (operator? x)
   (hash-has-key? operators x))
@@ -91,6 +98,7 @@
 
 (define-language L0
   (terminals
+   (name (n))
    (constant (c))
    (variable (x))
    (operator (o)))
@@ -99,7 +107,9 @@
         x ;; variable
         (op o e0 e1))
   (Stmt (s body)
-        (assign x e)))
+        (assign x e)
+        (fn n body)
+        (while e body)))
 
 (define-language L1
   (extends L0)
@@ -107,7 +117,7 @@
         (+
          (op-assign o x e))))
 
-(define-pass lower-operations : L1 (ir) -> L0 ()
+(define-pass lower-op-assign : L1 (ir) -> L0 ()
   (definitions)
   (Expr : Expr (ir) -> Stmt ()
         [(op-assign ,o ,x ,[e]) `(assign x (op o x e))])
@@ -121,4 +131,6 @@
 (tokenize (open-input-string "function test() local some_stuff = {1, 2, 3, 4}; return #some_stuff end"))
 (tokenize (open-input-string "function hello_world() return false end"))
 (tokenize (open-input-string "function hello_world() return not -25 end"))
-(tokenize (open-input-string "local thing = 25 + 35"))
+
+(define assignment-test (tokenize (open-input-string "local thing = 25 + 35")))
+(syntax->datum (parse assignment-test))
