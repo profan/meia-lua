@@ -109,19 +109,20 @@
   (Stmt (s body)
         (assign x e)
         (fn n body)
-        (while e body)))
+        (while e body)
+        (Expr e)))
 
 (define-language L1
   (extends L0)
-  (Expr (e body)
+  (Stmt (s body)
         (+
          (op-assign o x e))))
 
 (define-pass lower-op-assign : L1 (ir) -> L0 ()
   (definitions)
-  (Expr : Expr (ir) -> Stmt ()
+  (Stmt : Stmt (ir) -> Stmt ()
         [(op-assign ,o ,x ,[e]) `(assign x (op o x e))])
-  (Expr ir))
+  (Stmt ir))
 
 (language->s-expression L0)
 (language->s-expression L1)
