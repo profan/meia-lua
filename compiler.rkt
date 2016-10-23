@@ -62,21 +62,31 @@
 
 (define id-regexp "(\\p{L}|\\_)+")
 
+(define (any-ok? . fns)
+  (define (test ifns)
+    (match ifns
+      ['() #f]
+      [else
+       (define result ((car ifns)))
+       (if (eq? result #f)
+           (test (cdr ifns))
+           result)]))
+  (test fns))
+
 (define (tokenize p)
   (define ex-ops (expand-operators (hash-keys operators)))
   (for/list ([b-str (regexp-match* (pregexp (format "\"[^\"]+\"|~a|\\p{N}+|[~a]" id-regexp ex-ops)) p)])
     (define str (bytes->string/utf-8 b-str))
-    (cond
-      [(hash-has-key? operators str) (token (car (hash-ref operators str)) str)]
-      [(hash-has-key? keywords str) (token (car (hash-ref keywords str)) str)]
-      [else
+    (match (any-ok? (λ () (car (hash-ref operators str #f))) (λ () (hash-ref keywords str #f)))
+      [#f
        (let* ([n (string->number str)])
          (cond
            [(number? n) (token 'NUM n)]
            [else
             (cond
               [(string-prefix? str "\"") (token 'STR (string-trim str "\""))]
-              [else (token 'VAR str)])]))])))
+              [else (token 'VAR str)])]))]
+      [sym (token (car sym) str)])))
 
 (define (name? n)
   (define id-p (pregexp id-regexp))
