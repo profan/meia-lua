@@ -104,8 +104,9 @@
    (operator (o)))
   (Stmt (s body)
         (assign x e)
-        (fn n c)
+        (fn n s ...)
         (while e body)
+        (ret e)
         e)
   (Expr (e body)
         x ;; variable
@@ -126,7 +127,7 @@
 (define-pass lower-op-assign : L1 (ir) -> L0 ()
   (definitions)
   (Stmt : Stmt (ir) -> Stmt ()
-        [(op-assign ,o ,x ,[e]) `(assign x (binop o x e))])
+        [(op-assign ,o ,x ,[e]) `(assign x (binop ,o ,x ,e))])
   (Stmt ir))
 
 (language->s-expression L0)
@@ -151,4 +152,6 @@
 (parse-L1 'x)
 (parse-L1 '25)
 (parse-L1 '(assign x 10))
-(parse-L1 '(op-assign "+" x 25))
+(lower-op-assign (parse-L1 '(op-assign "+" x 25)))
+(lower-op-assign (parse-L1 '(op-assign "+" x (binop "-" 35 25))))
+(parse-L1 '(fn "hello_world" (ret 32)))
