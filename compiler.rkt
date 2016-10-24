@@ -102,13 +102,14 @@
    (constant (c))
    (variable (x))
    (operator (o)))
-  (Stmt (s body)
+  (Stmt (s)
         (assign x e)
-        (fn n s ...)
-        (while e body)
+        (fn n s* ... s)
+        (while e s* ... s)
         (ret e)
+        (s* ... s)
         e)
-  (Expr (e body)
+  (Expr (e)
         x ;; variable
         c ;; constant
         (unop o e0)
@@ -148,10 +149,28 @@
 (debug-print-data "local x, y, z = 16, 24, 32")
 (debug-print-data "local thing = 25 + 35")
 
-;; MANUAL AST FOR TESTING OK FUCK SHIT ASS
+(define-pass generate-code : L0 (ir) -> * ()
+  (Expr : Expr(e) -> * ()
+        [,x x]
+        [,c c]
+        [(unop ,o ,e) (format "~a~a" o (Expr e))]
+        [(binop ,o ,e1 ,e2) (format "~a ~a ~a" (Expr e1) o (Expr e2))]
+        )
+  (Stmt : Stmt(ir) -> *()
+        [(assign ,x ,e) (format "~a = ~a" x (Expr e))]
+        [(fn ,n ,s* ... ,s) (format "function ~a () ~a end" n (string-join (reverse (map Stmt (cons s s*)))))]
+        [(while ,e ,s* ... ,s) (format "while ~a do ~a end" (Expr e) (string-join (map Stmt (cons s s*))))]
+        [(ret ,e) (format "return ~a" (Expr e))]
+        [(,s* ... ,s) (format "do ~a end" (string-join (reverse (map Stmt (cons s s*)))))]))
+
+;; MANUAL AST FOR TESTING OK FUC
 (parse-L1 'x)
 (parse-L1 '25)
 (parse-L1 '(assign x 10))
 (lower-op-assign (parse-L1 '(op-assign "+" x 25)))
 (lower-op-assign (parse-L1 '(op-assign "+" x (binop "-" 35 25))))
 (parse-L1 '(fn "hello_world" (ret 32)))
+(generate-code
+ (lower-op-assign
+  (parse-L1 '((assign x 0)
+              (while true (op-assign "+" x 1))))))
