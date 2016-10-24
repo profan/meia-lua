@@ -151,14 +151,14 @@
 
 (define-pass generate-code : L0 (ir) -> * ()
   (definitions
-    (define (format-list lst)
+    (define (format-list lst #:sep [sep ""])
       (string-join
        (reverse
         (map (λ (n)
                (cond
                  [(L0-Stmt? n) (Stmt n)]
                  [(L0-Expr? n) (Expr n)]
-                 [else n])) lst)))))
+                 [else n])) lst)) sep)))
   (Expr : Expr(e) -> * ()
         [,x x]
         [,c c]
@@ -167,10 +167,10 @@
         )
   (Stmt : Stmt(ir) -> *()
         [(assign ,x ,e) (format "~a = ~a" x (Expr e))]
-        [(fn ,n ,s* ... ,s) (format "function ~a () ~a end" n (format-list (cons s s*)))]
-        [(while ,e ,s* ... ,s) (format "while ~a do ~a end" (Expr e) (format-list (cons s s*)))]
+        [(fn ,n ,s* ... ,s) (format "function ~a () ~n ~a ~nend" n (format-list (cons s s*)))]
+        [(while ,e ,s* ... ,s) (format "while ~a do ~n ~a ~nend" (Expr e) (format-list (cons s s*)))]
         [(ret ,e) (format "return ~a" (Expr e))]
-        [(,s* ... ,s) (format "do ~a end" (format-list (cons s s*)))]))
+        [(,s* ... ,s) (format "~a" (format-list (cons s s*) #:sep "\n"))]))
 
 ;; MANUAL AST FOR TESTING OK FUC
 (parse-L1 'x)
@@ -179,7 +179,10 @@
 (lower-op-assign (parse-L1 '(op-assign "+" x 25)))
 (lower-op-assign (parse-L1 '(op-assign "+" x (binop "-" 35 25))))
 (parse-L1 '(fn "hello_world" (ret 32)))
-(generate-code
- (lower-op-assign
-  (parse-L1 '((assign x 0)
-              (while true (op-assign "+" x 1))))))
+
+;; codegen testing
+(displayln
+ (generate-code
+  (lower-op-assign
+   (parse-L1 '((assign x 0)
+               (while true (op-assign "+" x (binop "*" 5 2))))))))
