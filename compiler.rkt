@@ -102,21 +102,26 @@
    (constant (c))
    (variable (x))
    (operator (o)))
-  (Expr (e body)
-        c ;; constant
-        x ;; variable
-        (binop o e0 e1))
   (Stmt (s body)
         (assign x e)
-        (fn n body)
+        (fn n c)
         (while e body)
-        (Expr e)))
+        e)
+  (Expr (e body)
+        x ;; variable
+        c ;; constant
+        (unop o e0)
+        (binop o e0 e1)))
+
+(define-parser parse-L0 L0)
 
 (define-language L1
   (extends L0)
   (Stmt (s body)
         (+
          (op-assign o x e))))
+
+(define-parser parse-L1 L1)
 
 (define-pass lower-op-assign : L1 (ir) -> L0 ()
   (definitions)
@@ -141,3 +146,9 @@
 (debug-print-data "function hello_world() return not -25 end")
 (debug-print-data "local x, y, z = 16, 24, 32")
 (debug-print-data "local thing = 25 + 35")
+
+;; MANUAL AST FOR TESTING OK FUCK SHIT ASS
+(parse-L1 'x)
+(parse-L1 '25)
+(parse-L1 '(assign x 10))
+(parse-L1 '(op-assign "+" x 25))
