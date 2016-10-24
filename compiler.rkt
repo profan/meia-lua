@@ -150,6 +150,15 @@
 (debug-print-data "local thing = 25 + 35")
 
 (define-pass generate-code : L0 (ir) -> * ()
+  (definitions
+    (define (format-list lst)
+      (string-join
+       (reverse
+        (map (λ (n)
+               (cond
+                 [(L0-Stmt? n) (Stmt n)]
+                 [(L0-Expr? n) (Expr n)]
+                 [else n])) lst)))))
   (Expr : Expr(e) -> * ()
         [,x x]
         [,c c]
@@ -158,10 +167,10 @@
         )
   (Stmt : Stmt(ir) -> *()
         [(assign ,x ,e) (format "~a = ~a" x (Expr e))]
-        [(fn ,n ,s* ... ,s) (format "function ~a () ~a end" n (string-join (reverse (map Stmt (cons s s*)))))]
-        [(while ,e ,s* ... ,s) (format "while ~a do ~a end" (Expr e) (string-join (map Stmt (cons s s*))))]
+        [(fn ,n ,s* ... ,s) (format "function ~a () ~a end" n (format-list (cons s s*)))]
+        [(while ,e ,s* ... ,s) (format "while ~a do ~a end" (Expr e) (format-list (cons s s*)))]
         [(ret ,e) (format "return ~a" (Expr e))]
-        [(,s* ... ,s) (format "do ~a end" (string-join (reverse (map Stmt (cons s s*)))))]))
+        [(,s* ... ,s) (format "do ~a end" (format-list (cons s s*)))]))
 
 ;; MANUAL AST FOR TESTING OK FUC
 (parse-L1 'x)
