@@ -78,6 +78,15 @@
               [(string-prefix? str "\"") (token 'STR (string-trim str "\""))]
               [else (token 'VAR str)])]))])))
 
+;; CST to AST transformer here
+
+(define (transform-to-ast cst)
+  (syntax-parse cst
+    [({~literal chunk} stmts ...) #t]
+    [else #f]))
+
+;; AST parsing follows
+
 (define (name? n)
   (define id-p (pregexp id-regexp))
   (regexp-match-exact? id-p n))
@@ -163,8 +172,7 @@
         [,x x]
         [,c c]
         [(unop ,o ,e) (format "~a~a" o (Expr e))]
-        [(binop ,o ,e1 ,e2) (format "~a ~a ~a" (Expr e1) o (Expr e2))]
-        )
+        [(binop ,o ,e1 ,e2) (format "~a ~a ~a" (Expr e1) o (Expr e2))])
   (Stmt : Stmt(ir) -> *()
         [(assign ,x ,e) (format "~a = ~a" x (Expr e))]
         [(fn ,n ,s* ... ,s) (format "function ~a () ~n ~a ~nend" n (format-list (cons s s*)))]
@@ -176,8 +184,8 @@
 (parse-L1 'x)
 (parse-L1 '25)
 (parse-L1 '(assign x 10))
-(lower-op-assign (parse-L1 '(op-assign "+" x 25)))
-(lower-op-assign (parse-L1 '(op-assign "+" x (binop "-" 35 25))))
+(parse-L1 '(op-assign "+" x 25))
+(parse-L1 '(op-assign "+" x (binop "-" 35 25)))
 (parse-L1 '(fn "hello_world" (ret 32)))
 
 ;; codegen testing
@@ -186,3 +194,6 @@
   (lower-op-assign
    (parse-L1 '((assign x 0)
                (while true (op-assign "+" x (binop "*" 5 2))))))))
+
+;; cst to ast testing
+(transform-to-ast (parse (tokenize (open-input-string "local x = 32"))))
