@@ -80,9 +80,13 @@
 
 ;; CST to AST transformer here
 
-(define (transform-to-ast cst)
+(define (cst-to-ast cst)
+  (displayln cst)
   (syntax-parse cst
-    [({~literal chunk} stmts ...) #t]
+    [({~literal chunk} stmts ...)
+     (for/list ([s (syntax->list #'(stmts ...))])
+       (cst-to-ast s))]
+    [({~literal stat} {~optional (~datum "local")} (~seq namelist ...) (~datum "=") ...) #t]
     [else #f]))
 
 ;; AST parsing follows
@@ -196,4 +200,4 @@
                (while true (op-assign "+" x (binop "*" 5 2))))))))
 
 ;; cst to ast testing
-(transform-to-ast (parse (tokenize (open-input-string "local x = 32"))))
+(cst-to-ast (parse (tokenize (open-input-string "local x = 32"))))
