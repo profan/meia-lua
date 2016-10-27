@@ -194,6 +194,7 @@
 (parse-L1 '(assign x 10))
 (parse-L1 '(op-assign "+" x 25))
 (parse-L1 '(op-assign "+" x (binop "-" 35 25)))
+(lower-op-assign (parse-L1 '(op-assign "+" (varlist x y) (24 (binop "-" 35 25)))))
 (parse-L1 '(fn "hello_world" (ret 32)))
 
 ;; codegen testing
@@ -207,7 +208,7 @@
  (generate-code
   (lower-op-assign
    (parse-L1 '((assign (varlist x y) (0 0))
-               (while true (op-assign "+" (varlist x y) (binop "*" 16 32))))))))
+               (while true (op-assign "+" (varlist x y) ((binop "*" 32 16) 48))))))))
 
 ;; cst to ast testing
 (cst-to-ast (parse (tokenize (open-input-string "local x, y = 32, 32"))))
