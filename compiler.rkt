@@ -116,7 +116,7 @@
    (variable (x))
    (operator (o)))
   (Stmt (s)
-        (assign x e)
+        (assign e0 e1)
         (fn n s* ... s)
         (while e s* ... s)
         (ret e)
@@ -126,7 +126,9 @@
         x ;; variable
         c ;; constant
         (unop o e0)
-        (binop o e0 e1)))
+        (binop o e0 e1)
+        (varlist x* ... x)
+        (e* ... e)))
 
 (define-parser parse-L0 L0)
 
@@ -134,14 +136,14 @@
   (extends L0)
   (Stmt (s body)
         (+
-         (op-assign o x e))))
+         (op-assign o e0 e1))))
 
 (define-parser parse-L1 L1)
 
 (define-pass lower-op-assign : L1 (ir) -> L0 ()
   (definitions)
   (Stmt : Stmt (ir) -> Stmt ()
-        [(op-assign ,o ,x ,[e]) `(assign x (binop ,o ,x ,e))])
+        [(op-assign ,o ,[e0] ,[e1]) `(assign ,e0 (binop ,o ,e0 ,e1))])
   (Stmt ir))
 
 (language->s-expression L0)
@@ -173,12 +175,14 @@
                  [(L0-Expr? n) (Expr n)]
                  [else n])) lst)) sep)))
   (Expr : Expr(e) -> * ()
-        [,x x]
-        [,c c]
+        [,x (~a x)]
+        [,c (~a c)]
         [(unop ,o ,e) (format "~a~a" o (Expr e))]
-        [(binop ,o ,e1 ,e2) (format "~a ~a ~a" (Expr e1) o (Expr e2))])
+        [(binop ,o ,e1 ,e2) (format "~a ~a ~a" (Expr e1) o (Expr e2))]
+        [(varlist ,x* ... ,x) (format-list (cons x x*) #:sep ", ")]
+        [(,e* ... ,e) (format-list (cons e e*) #:sep ", ")])
   (Stmt : Stmt(ir) -> *()
-        [(assign ,x ,e) (format "~a = ~a" x (Expr e))]
+        [(assign ,e0 ,e1) (format "~a = ~a" (Expr e0) (Expr e1))]
         [(fn ,n ,s* ... ,s) (format "function ~a () ~n ~a ~nend" n (format-list (cons s s*)))]
         [(while ,e ,s* ... ,s) (format "while ~a do ~n ~a ~nend" (Expr e) (format-list (cons s s*)))]
         [(ret ,e) (format "return ~a" (Expr e))]
@@ -199,5 +203,11 @@
    (parse-L1 '((assign x 0)
                (while true (op-assign "+" x (binop "*" 5 2))))))))
 
+(displayln
+ (generate-code
+  (lower-op-assign
+   (parse-L1 '((assign (varlist x y) (0 0))
+               (while true (op-assign "+" (varlist x y) (binop "*" 16 32))))))))
+
 ;; cst to ast testing
-(cst-to-ast (parse (tokenize (open-input-string "local x = 32"))))
+(cst-to-ast (parse (tokenize (open-input-string "local x, y = 32, 32"))))
