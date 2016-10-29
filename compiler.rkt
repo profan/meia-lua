@@ -119,8 +119,19 @@
        #t]
       [({~literal laststat} terms ...)
        #t]
-      [({~literal stat} (~datum "function") ({~literal funcname} name) ({~literal funcbody} body ...))
-       #t]
+      [({~literal parlist} namelist ...)
+       (cst->ast #'(namelist ...))]
+      [({~literal namelist} names ...)
+       (for/list ([n (syntax->list #'(names ...))]
+                  #:when (not (eqv? (syntax->datum n ","))))
+         (syntax->datum n))]
+      [({~literal stat} (~datum "function") ({~literal funcname} name)
+        ({~literal funcbody} {~datum "("} names {~datum ")"} body ...))
+       (begin
+         (define stmts (cst->ast #'(body ...)))
+         (define args (cst->ast #'names))
+         `(fn ,(syntax->datum #'name) )
+         )]
       [else #f])))
 
 ;; AST parsing follows
@@ -304,8 +315,8 @@
     (open-input-string
      "do
         local x, y = 24, 32
-        function hello_world()
-          return x, y
+        function hello_world(a, b, c)
+          return a, b, c
         end
       end"))))
 
