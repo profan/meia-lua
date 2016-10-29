@@ -199,9 +199,9 @@
 ;; MANUAL AST FOR TESTING OK FUC
 (parse-L1 'x)
 (parse-L1 '25)
-(parse-L1 '(assign x 10))
-(parse-L1 '(op-assign "+" x 25))
-(parse-L1 '(op-assign "+" x (binop "-" 35 25)))
+(parse-L1 '(assign (x) (10)))
+(parse-L1 '(op-assign "+" (x) (25)))
+(parse-L1 '(op-assign "+" (x) (binop "-" 35 25)))
 (lower-op-assign (parse-L1 '(op-assign "+" (x y) (24 (binop "-" 35 25)))))
 (parse-L1 '(fn "hello_world" (ret 32)))
 
@@ -209,8 +209,8 @@
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '((assign x 0)
-               (while true (op-assign "+" x (binop "*" 5 2))))))))
+   (parse-L1 '((assign (x) (0))
+               (while true (op-assign "+" (x) ((binop "*" 5 2)))))))))
 
 (displayln
  (generate-code
