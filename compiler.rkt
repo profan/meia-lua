@@ -103,8 +103,8 @@
                   #:when (not (eqv? (syntax->datum e) ",")))
          (displayln e)
          (cst->ast e))]
-      [({~literal exp} e)
-       #t]
+      [(exp e)
+       (syntax->datum #'e)]
       [({~literal binop} o)
        #t]
       [({~literal unop} o)
