@@ -91,9 +91,10 @@
         (~datum "=")
         (~and es ({~literal explist} (~seq exprs ...))))
        (begin
-         (displayln (syntax->datum #'(exprs ...)))
-         `(assign ,(cst->ast #'ns)
-                  (,(cst->ast #'es))))]
+         (define n (cst->ast #'ns))
+         (define e (cst->ast #'es))
+         `(assign (,(cdr n) ... ,(car n))
+                  (,(cdr e) ... ,(car e))))]
       [({~literal namelist} (~seq names ...))
        (for/list ([n (syntax->list #'(names ...))]
                   #:when (not (eqv? (syntax->datum n) ",")))
@@ -101,7 +102,6 @@
       [({~literal explist} exprs ...)
        (for/list ([e (syntax->list #'(exprs ...))]
                   #:when (not (eqv? (syntax->datum e) ",")))
-         (displayln e)
          (cst->ast e))]
       [(exp e)
        (syntax->datum #'e)]
