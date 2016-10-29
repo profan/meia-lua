@@ -126,6 +126,7 @@
         x ;; variable
         c ;; constant
         (call n e* ...)
+        (table e* ...)
         (unop o e0)
         (binop o e0 e1)
         (e* ... e)))
@@ -188,9 +189,14 @@
   (Expr : Expr(e) -> * ()
         [,x (~a x)]
         [,c (~a c)]
-        [(call ,n ,e* ...) (format "~a(~a)" n (format-list '() e* #:sep ", "))]
-        [(unop ,o ,e) (format "~a~a" o (Expr e))]
-        [(binop ,o ,e1 ,e2) (format "~a ~a ~a" (Expr e1) o (Expr e2))]
+        [(call ,n ,e* ...)
+         (format "~a(~a)" n (format-list '() e* #:sep ", "))]
+        [(unop ,o ,e)
+         (format "~a~a" o (Expr e))]
+        [(binop ,o ,e1 ,e2)
+         (format "~a ~a ~a" (Expr e1) o (Expr e2))]
+        [(table ,e* ...)
+         (format "{~a}" (format-list '() e* #:sep ", "))]
         [(,e* ... ,e) (format-list e e* #:sep ", ")])
   (Stmt : Stmt(ir) -> *()
         [(assign (,x* ... ,x) (,e* ... ,e))
@@ -225,6 +231,12 @@
    (parse-L1 '((assign (x y) (0 0))
                (while true (op-assign "+" (x y) ((binop "*" 32 16) 48)))
                (ret (32 24)))))))
+
+(displayln
+ (generate-code
+  (lower-op-assign
+   (parse-L1 '((assign (t1 t2) ((table (1 2 3 4)) (table (5 6 7 8))))
+               (ret (t1 t2)))))))
 
 ;; cst to ast testing
 (cst-to-ast (parse (tokenize (open-input-string "local x, y = 32, 32"))))
