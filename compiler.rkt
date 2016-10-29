@@ -119,8 +119,8 @@
         (assign (x* ... x) (e* ... e))
         (fn n s* ... s)
         (while e s* ... s)
-        (ret e)
         (begin s* ... s)
+        (ret e)
         e)
   (Expr (e)
         x ;; variable
