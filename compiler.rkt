@@ -120,7 +120,7 @@
         (fn n s* ... s)
         (while e s* ... s)
         (ret e)
-        (s* ... s)
+        (begin s* ... s)
         e)
   (Expr (e)
         x ;; variable
@@ -216,7 +216,7 @@
          (format "while ~a do ~n ~a ~nend" (Expr e) (format-list s s*))]
         [(ret ,e)
          (format "return ~a" (Expr e))]
-        [(,s* ... ,s)
+        [(begin ,s* ... ,s)
          (format "~a" (format-list s s* #:sep "\n"))]))
 
 ;; MANUAL AST FOR TESTING OK FUC
@@ -233,26 +233,29 @@
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '((assign (x) (0))
-               (while true (op-assign "+" (x) ((binop "*" 5 2)))))))))
+   (parse-L1 '(begin
+                (assign (x) (0))
+                (while true (op-assign "+" (x) ((binop "*" 5 2)))))))))
 
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '((assign (x y) (0 0))
-               (while true (op-assign "+" (x y) ((binop "*" 32 16) 48)))
-               (ret (32 24)))))))
+   (parse-L1 '(begin
+                (assign (x y) (0 0))
+                (while true (op-assign "+" (x y) ((binop "*" 32 16) 48)))
+                (ret (32 24)))))))
 
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '((assign (t1 t2 t3) ((table (1 2 3 4)) (table (5 6 7 8)) (table)))
-               (ret (t1 t2 t3)))))))
+   (parse-L1 '(begin
+                (assign (t1 t2 t3) ((table (1 2 3 4)) (table (5 6 7 8)) (table)))
+                (ret (t1 t2 t3)))))))
 
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '(access love update)))))
+   (parse-L1 '(access love "update")))))
 
 (displayln
  (generate-code
