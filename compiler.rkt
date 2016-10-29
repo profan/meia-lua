@@ -235,8 +235,8 @@
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '((assign (t1 t2) ((table (1 2 3 4)) (table (5 6 7 8))))
-               (ret (t1 t2)))))))
+   (parse-L1 '((assign (t1 t2 t3) ((table (1 2 3 4)) (table (5 6 7 8)) (table)))
+               (ret (t1 t2 t3)))))))
 
 ;; cst to ast testing
 (cst-to-ast (parse (tokenize (open-input-string "local x, y = 32, 32"))))
