@@ -125,6 +125,7 @@
   (Expr (e)
         x ;; variable
         c ;; constant
+        (call n e* ...)
         (unop o e0)
         (binop o e0 e1)
         (e* ... e)))
@@ -148,7 +149,9 @@
              (with-output-language (L0 Expr)
               (for/list ([lhs (cons x x*)] [rhs (cons e e*)])
                 `(binop ,o ,lhs ,rhs))))
-           `(assign (,x* ... ,x) (,(cdr ops) ... ,(car ops))))])
+           `(assign (,x* ... ,x) (,(cdr ops) ... ,(car ops))))]
+        [(op-assign ,o (,x* ... ,x) ,[e])
+         `(assign (,x* ... ,x) (,e))])
   (Stmt ir))
 
 (language->s-expression L0)
@@ -172,15 +175,20 @@
 (define-pass generate-code : L0 (ir) -> * ()
   (definitions
     (define (format-list e e* #:sep [sep ""])
+      (define l
+        (cond
+          [(empty? e) e*]
+          [else (append e* (list e))]))
       (string-join
        (map (λ (n)
               (cond
                 [(L0-Stmt? n) (Stmt n)]
                 [(L0-Expr? n) (Expr n)]
-                [else n])) (append e* (list e))) sep)))
+                [else n])) l) sep)))
   (Expr : Expr(e) -> * ()
         [,x (~a x)]
         [,c (~a c)]
+        [(call ,n ,e* ...) (format "~a(~a)" n (format-list '() e* #:sep ", "))]
         [(unop ,o ,e) (format "~a~a" o (Expr e))]
         [(binop ,o ,e1 ,e2) (format "~a ~a ~a" (Expr e1) o (Expr e2))]
         [(,e* ... ,e) (format-list e e* #:sep ", ")])
@@ -199,6 +207,7 @@
 (parse-L1 '25)
 (parse-L1 '(assign (x) (10)))
 (parse-L1 '(op-assign "+" (x) (25)))
+(displayln (generate-code (lower-op-assign (parse-L1 '(op-assign "+" (x) (call "print" 25 32))))))
 (parse-L1 '(op-assign "+" (x) (binop "-" 35 25)))
 (lower-op-assign (parse-L1 '(op-assign "+" (x y) (24 (binop "-" 35 25)))))
 (parse-L1 '(fn "hello_world" (ret (32))))
