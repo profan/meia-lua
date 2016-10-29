@@ -177,7 +177,7 @@
               (cond
                 [(L0-Stmt? n) (Stmt n)]
                 [(L0-Expr? n) (Expr n)]
-                [else n])) (cons e e*)) sep)))
+                [else n])) (append e* (list e))) sep)))
   (Expr : Expr(e) -> * ()
         [,x (~a x)]
         [,c (~a c)]
