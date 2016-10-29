@@ -293,11 +293,12 @@
 (define test-syntax
   (parse
    (tokenize
-    (open-input-string "local x, y = 32, 32"))))
+    (open-input-string "local x, y = 24, 32"))))
 
 (pretty-print (syntax->datum test-syntax))
 (pretty-print (parse-L1 '(assign (x y) (10 24))))
 (pretty-print (car (cst->ast test-syntax)))
-(generate-code
- (lower-op-assign
-  (parse-L1 (car (cst->ast test-syntax)))))
+(displayln
+ (generate-code
+  (lower-op-assign
+   (car (cst->ast test-syntax)))))
