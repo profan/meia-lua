@@ -81,26 +81,39 @@
 ;; CST to AST transformer here
 
 (define (cst->ast cst)
-  (displayln cst)
-  (syntax-parse cst
-    [({~literal chunk} stmts ...)
-     (for/list ([s (syntax->list #'(stmts ...))])
-       (cst->ast s))]
-    [({~literal stat} {~optional (~datum "local")} (~seq namelist ...) (~datum "=") ...)
-     #t]
-    [({~literal explist} exprs ...)
-     #t]
-    [({~literal exp} e)
-     #t]
-    [({~literal binop} o)
-     #t]
-    [({~literal unop} o)
-     #t]
-    [({~literal laststat} terms ...)
-     #t]
-    [((~datum "function") ({~literal funcname} name) ({~literal funcbody} body))
-     #t]
-    [else #f]))
+  (with-output-language (L0 Stmt)
+    (syntax-parse cst
+      [({~literal chunk} stmts ...)
+       (for/list ([s (syntax->list #'(stmts ...))])
+         (cst->ast s))]
+      [({~literal stat} {~optional (~datum "local")}
+        (~and ns ({~literal namelist} (~seq names ...)))
+        (~datum "=")
+        (~and es ({~literal explist} (~seq exprs ...))))
+       (begin
+         (displayln (syntax->datum #'(exprs ...)))
+         `(assign ,(cst->ast #'ns)
+                  (,(cst->ast #'es))))]
+      [({~literal namelist} (~seq names ...))
+       (for/list ([n (syntax->list #'(names ...))]
+                  #:when (not (eqv? (syntax->datum n) ",")))
+         (string->symbol (syntax->datum n)))]
+      [({~literal explist} exprs ...)
+       (for/list ([e (syntax->list #'(exprs ...))]
+                  #:when (not (eqv? (syntax->datum e) ",")))
+         (displayln e)
+         (cst->ast e))]
+      [({~literal exp} e)
+       #t]
+      [({~literal binop} o)
+       #t]
+      [({~literal unop} o)
+       #t]
+      [({~literal laststat} terms ...)
+       #t]
+      [((~datum "function") ({~literal funcname} name) ({~literal funcbody} body))
+       #t]
+      [else #f])))
 
 ;; AST parsing follows
 
