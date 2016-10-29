@@ -197,16 +197,21 @@
          (format "~a ~a ~a" (Expr e1) o (Expr e2))]
         [(table ,e* ...)
          (format "{~a}" (format-list '() e* #:sep ", "))]
-        [(,e* ... ,e) (format-list e e* #:sep ", ")])
+        [(,e* ... ,e)
+         (format-list e e* #:sep ", ")])
   (Stmt : Stmt(ir) -> *()
         [(assign (,x* ... ,x) (,e* ... ,e))
          (format "~a = ~a"
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
-        [(fn ,n ,s* ... ,s) (format "function ~a () ~n ~a ~nend" n (format-list s s*))]
-        [(while ,e ,s* ... ,s) (format "while ~a do ~n ~a ~nend" (Expr e) (format-list s s*))]
-        [(ret ,e) (format "return ~a" (Expr e))]
-        [(,s* ... ,s) (format "~a" (format-list s s* #:sep "\n"))]))
+        [(fn ,n ,s* ... ,s)
+         (format "function ~a () ~n ~a ~nend" n (format-list s s*))]
+        [(while ,e ,s* ... ,s)
+         (format "while ~a do ~n ~a ~nend" (Expr e) (format-list s s*))]
+        [(ret ,e)
+         (format "return ~a" (Expr e))]
+        [(,s* ... ,s)
+         (format "~a" (format-list s s* #:sep "\n"))]))
 
 ;; MANUAL AST FOR TESTING OK FUC
 (parse-L1 'x)
