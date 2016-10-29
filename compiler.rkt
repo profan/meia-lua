@@ -119,19 +119,15 @@
        #t]
       [({~literal laststat} terms ...)
        #t]
-      [({~literal parlist} namelist ...)
-       (cst->ast #'(namelist ...))]
-      [({~literal namelist} names ...)
-       (for/list ([n (syntax->list #'(names ...))]
-                  #:when (not (eqv? (syntax->datum n ","))))
-         (syntax->datum n))]
+      [({~literal parlist} names ...)
+       (cst->ast #'(names ...))]
       [({~literal stat} (~datum "function") ({~literal funcname} name)
-        ({~literal funcbody} {~datum "("} names {~datum ")"} body ...))
+        ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
        (begin
-         (define stmts (cst->ast #'(body ...)))
-         (define args (cst->ast #'names))
-         `(fn ,(syntax->datum #'name) )
-         )]
+         (displayln #'names)
+         (define stmts (cst->ast #'body))
+         (define args (cst->ast (cst->ast #'names)))
+         `(fn ,(syntax->datum #'name) ,args (,(cdr stmts) ... ,(car stmts))))]
       [else #f])))
 
 ;; AST parsing follows
