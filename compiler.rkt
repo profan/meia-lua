@@ -81,7 +81,7 @@
 ;; CST to AST transformer here
 
 (define (cst->ast cst)
-  (with-output-language (L0 Stmt)
+  (with-output-language (L1 Stmt)
     (syntax-parse cst
       [({~literal chunk} stmts ...)
        (for/list ([s (syntax->list #'(stmts ...))])
@@ -249,6 +249,7 @@
 (parse-L1 'x)
 (parse-L1 '25)
 (parse-L1 '(assign (x) (10)))
+(parse-L1 '(assign (x y) (10 24)))
 (parse-L1 '(op-assign "+" (x) (25)))
 (lower-op-assign (parse-L1 '(op-assign "+" (x y z) (call "print" (25 32)))))
 (parse-L1 '(op-assign "+" (x) (binop "-" 35 25)))
@@ -295,4 +296,8 @@
     (open-input-string "local x, y = 32, 32"))))
 
 (pretty-print (syntax->datum test-syntax))
-(cst->ast test-syntax)
+(pretty-print (parse-L1 '(assign (x y) (10 24))))
+(pretty-print (car (cst->ast test-syntax)))
+(generate-code
+ (lower-op-assign
+  (parse-L1 (car (cst->ast test-syntax)))))
