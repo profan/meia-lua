@@ -86,6 +86,14 @@
       [({~literal chunk} stmts ...)
        (for/list ([s (syntax->list #'(stmts ...))])
          (cst->ast s))]
+      [({~literal stat} {~datum "do"} block {~datum "end"})
+       (begin
+         (define bs (cst->ast #'block))
+        `(begin ,(cdr bs) ... ,(car bs)))]
+      [({~literal block} chunks ...)
+       (flatten
+        (for/list ([c (syntax->list #'(chunks ...))])
+          (cst->ast c)))]
       [({~literal stat} {~optional (~datum "local")}
         (~and ns ({~literal namelist} (~seq names ...)))
         (~datum "=")
@@ -111,7 +119,7 @@
        #t]
       [({~literal laststat} terms ...)
        #t]
-      [((~datum "function") ({~literal funcname} name) ({~literal funcbody} body))
+      [({~literal stat} (~datum "function") ({~literal funcname} name) ({~literal funcbody} body ...))
        #t]
       [else #f])))
 
@@ -293,7 +301,13 @@
 (define test-syntax
   (parse
    (tokenize
-    (open-input-string "local x, y = 24, 32"))))
+    (open-input-string
+     "do
+        local x, y = 24, 32
+        function hello_world()
+          return x, y
+        end
+      end"))))
 
 (pretty-print (syntax->datum test-syntax))
 (pretty-print (parse-L1 '(assign (x y) (10 24))))
