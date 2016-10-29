@@ -171,30 +171,28 @@
 
 (define-pass generate-code : L0 (ir) -> * ()
   (definitions
-    (define (format-list lst #:sep [sep ""])
+    (define (format-list e e* #:sep [sep ""])
       (string-join
-       (reverse
-        (map (λ (n)
-               (cond
-                 [(L0-Stmt? n) (Stmt n)]
-                 [(L0-Expr? n) (Expr n)]
-                 [else n])) lst)) sep)))
+       (map (λ (n)
+              (cond
+                [(L0-Stmt? n) (Stmt n)]
+                [(L0-Expr? n) (Expr n)]
+                [else n])) (cons e e*)) sep)))
   (Expr : Expr(e) -> * ()
         [,x (~a x)]
         [,c (~a c)]
         [(unop ,o ,e) (format "~a~a" o (Expr e))]
         [(binop ,o ,e1 ,e2) (format "~a ~a ~a" (Expr e1) o (Expr e2))]
-        [(,e* ... ,e) (format-list (cons e e*) #:sep ", ")])
+        [(,e* ... ,e) (format-list e e* #:sep ", ")])
   (Stmt : Stmt(ir) -> *()
         [(assign (,x* ... ,x) (,e* ... ,e))
-         (begin (displayln (format "x's: ~s" (format-list (cons x x*))))
-                (format "~a = ~a"
-                        (format-list (cons x x*) #:sep ", ")
-                        (format-list (cons e e*) #:sep ", ")))]
-        [(fn ,n ,s* ... ,s) (format "function ~a () ~n ~a ~nend" n (format-list (cons s s*)))]
-        [(while ,e ,s* ... ,s) (format "while ~a do ~n ~a ~nend" (Expr e) (format-list (cons s s*)))]
+         (format "~a = ~a"
+                 (format-list x x* #:sep ", ")
+                 (format-list e e* #:sep ", "))]
+        [(fn ,n ,s* ... ,s) (format "function ~a () ~n ~a ~nend" n (format-list s s*))]
+        [(while ,e ,s* ... ,s) (format "while ~a do ~n ~a ~nend" (Expr e) (format-list s s*))]
         [(ret ,e) (format "return ~a" (Expr e))]
-        [(,s* ... ,s) (format "~a" (format-list (cons s s*) #:sep "\n"))]))
+        [(,s* ... ,s) (format "~a" (format-list s s* #:sep "\n"))]))
 
 ;; MANUAL AST FOR TESTING OK FUC
 (parse-L1 'x)
@@ -203,7 +201,7 @@
 (parse-L1 '(op-assign "+" (x) (25)))
 (parse-L1 '(op-assign "+" (x) (binop "-" 35 25)))
 (lower-op-assign (parse-L1 '(op-assign "+" (x y) (24 (binop "-" 35 25)))))
-(parse-L1 '(fn "hello_world" (ret 32)))
+(parse-L1 '(fn "hello_world" (ret (32))))
 
 ;; codegen testing
 (displayln
@@ -216,7 +214,8 @@
  (generate-code
   (lower-op-assign
    (parse-L1 '((assign (x y) (0 0))
-               (while true (op-assign "+" (x y) ((binop "*" 32 16) 48))))))))
+               (while true (op-assign "+" (x y) ((binop "*" 32 16) 48)))
+               (ret (32 24)))))))
 
 ;; cst to ast testing
 (cst-to-ast (parse (tokenize (open-input-string "local x, y = 32, 32"))))
