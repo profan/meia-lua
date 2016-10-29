@@ -135,7 +135,7 @@
   (extends L0)
   (Stmt (s body)
         (+
-         (op-assign o (x* ... x) e1))))
+         (op-assign o (x* ... x) e))))
 
 (define-parser parse-L1 L1)
 
