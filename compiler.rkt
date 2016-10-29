@@ -117,7 +117,7 @@
    (operator (o)))
   (Stmt (s)
         (assign (x* ... x) (e* ... e))
-        (fn n s* ... s)
+        (fn n (n* ...) s* ... s)
         (while e s* ... s)
         (begin s* ... s)
         (ret e)
@@ -210,8 +210,8 @@
          (format "~a = ~a"
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
-        [(fn ,n ,s* ... ,s)
-         (format "function ~a () ~n ~a ~nend" n (format-list s s*))]
+        [(fn ,n (,n* ...) ,s* ... ,s)
+         (format "function ~a (~a) ~n ~a ~nend" n (format-list '() n*) (format-list s s*))]
         [(while ,e ,s* ... ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (format-list s s*))]
         [(ret ,e)
@@ -227,7 +227,7 @@
 (lower-op-assign (parse-L1 '(op-assign "+" (x y z) (call "print" (25 32)))))
 (parse-L1 '(op-assign "+" (x) (binop "-" 35 25)))
 (lower-op-assign (parse-L1 '(op-assign "+" (x y) (24 (binop "-" 35 25)))))
-(parse-L1 '(fn "hello_world" (ret (32))))
+(lower-op-assign (parse-L1 '(fn "hello_world" () (ret (32)))))
 
 ;; codegen testing
 (displayln
