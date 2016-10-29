@@ -86,7 +86,20 @@
     [({~literal chunk} stmts ...)
      (for/list ([s (syntax->list #'(stmts ...))])
        (cst-to-ast s))]
-    [({~literal stat} {~optional (~datum "local")} (~seq namelist ...) (~datum "=") ...) #t]
+    [({~literal stat} {~optional (~datum "local")} (~seq namelist ...) (~datum "=") ...)
+     #t]
+    [({~literal explist} exprs ...)
+     #t]
+    [({~literal exp} e)
+     #t]
+    [({~literal binop} o)
+     #t]
+    [({~literal unop} o)
+     #t]
+    [({~literal laststat})
+     #t]
+    [((~datum "function") ({~literal funcname} name) ({~literal funcbody} body))
+     #t]
     [else #f]))
 
 ;; AST parsing follows
@@ -214,10 +227,10 @@
          (format "function ~a (~a) ~n ~a ~nend" n (format-list '() n*) (format-list s s*))]
         [(while ,e ,s* ... ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (format-list s s*))]
-        [(ret ,e)
-         (format "return ~a" (Expr e))]
         [(begin ,s* ... ,s)
-         (format "~a" (format-list s s* #:sep "\n"))]))
+         (format "~a" (format-list s s* #:sep "\n"))]
+        [(ret ,e)
+         (format "return ~a" (Expr e))]))
 
 ;; MANUAL AST FOR TESTING OK FUC
 (parse-L1 'x)
