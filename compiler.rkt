@@ -199,6 +199,7 @@
 (define-pass lower-op-assign : L1 (ir) -> L0 ()
   (definitions)
   (Stmt : Stmt (ir) -> Stmt ()
+        ;; turns x, y += 10,24 into x, y = x + 10, y + 24
         [(op-assign ,o (,x* ... ,x) (,[e*] ... ,[e]))
          (begin
            (define ops
@@ -206,7 +207,10 @@
               (for/list ([lhs (cons x x*)] [rhs (cons e e*)])
                 `(binop ,o ,lhs ,rhs))))
            `(assign (,x* ... ,x) (,(cdr ops) ... ,(car ops))))]
-        ;; forms the case for expressions like x, y += call()
+        ;; TODO: forms the case for expressions like x, y += call()
+        ;;  which here should become ...
+        ;;  local tmp_x, tmp_y = call()
+        ;;  x, y = x + tmp_x, tmp_y
         [(op-assign ,o (,x* ... ,x) ,[e])
          `(assign (,x* ... ,x) (,e))])
   (Stmt ir))
