@@ -91,9 +91,8 @@
          (define bs (cst->ast #'block))
         `(begin ,(cdr bs) ... ,(car bs)))]
       [({~literal block} chunks ...)
-       (flatten
-        (for/list ([c (syntax->list #'(chunks ...))])
-          (cst->ast c)))]
+       (apply append (for/list ([c (syntax->list #'(chunks ...))])
+                       (apply append (cst->ast c))))]
       [({~literal stat} {~optional (~datum "local")}
         (~and ns ({~literal namelist} (~seq names ...)))
         (~datum "=")
@@ -111,23 +110,36 @@
        (for/list ([e (syntax->list #'(exprs ...))]
                   #:when (not (eqv? (syntax->datum e) ",")))
          (cst->ast e))]
+      [({~literal laststat} terms ...)
+       (cst->ast #'(terms ...))]
+      [({~literal parlist} names ...)
+       (cst->ast #'(names ...))]
+      [({~datum "return"} exprs)
+       (begin
+         (define es (cst->ast #'exprs))
+         `(ret (,(cdr es) ... ,(car es))))]
+      [({~literal prefixexp} e)
+       (cst->ast #'e)]
+      [({~literal var} v)
+       (string->symbol (syntax->datum #'v))]
       [(exp e)
-       (syntax->datum #'e)]
+       (cst->ast #'e)]
       [({~literal binop} o)
        #t]
       [({~literal unop} o)
        #t]
-      [({~literal laststat} terms ...)
-       #t]
-      [({~literal parlist} names ...)
-       (cst->ast #'(names ...))]
-      [({~literal stat} (~datum "function") ({~literal funcname} name)
+      [({~literal stat} (~datum "function")
+        ({~literal funcname} name)
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
        (begin
-         (displayln #'names)
+         (displayln (syntax->datum #'body))
+         (define fname (syntax->datum #'name))
          (define stmts (cst->ast #'body))
-         (define args (cst->ast (cst->ast #'names)))
-         `(fn ,(syntax->datum #'name) ,args (,(cdr stmts) ... ,(car stmts))))]
+         (displayln stmts)
+         (define args (cst->ast #'names))
+         `(fn ,fname ,args ,(cdr stmts) ... ,(car stmts)))]
+      [e
+       (syntax->datum #'e)]
       [else #f])))
 
 ;; AST parsing follows
@@ -158,7 +170,7 @@
    (operator (o)))
   (Stmt (s)
         (assign (x* ... x) (e* ... e))
-        (fn n (n* ...) s* ... s)
+        (fn n (n* ...) (s* ... s))
         (while e s* ... s)
         (begin s* ... s)
         (ret e)
@@ -251,7 +263,7 @@
          (format "~a = ~a"
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
-        [(fn ,n (,n* ...) ,s* ... ,s)
+        [(fn ,n (,n* ...) (,s* ... ,s))
          (format "function ~a (~a) ~n ~a ~nend" n (format-list '() n*) (format-list s s*))]
         [(while ,e ,s* ... ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (format-list s s*))]
