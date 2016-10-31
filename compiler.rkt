@@ -89,10 +89,7 @@
       [({~literal stat} {~datum "do"} block {~datum "end"})
        (begin
          (define bs (cst->ast #'block))
-        `(begin ,(cdr bs) ... ,(car bs)))]
-      [({~literal block} chunks ...)
-       (apply append (for/list ([c (syntax->list #'(chunks ...))])
-                       (apply append (cst->ast c))))]
+         `(begin ,(cdr bs) ... ,(car bs)))]
       [({~literal stat} {~optional (~datum "local")}
         (~and ns ({~literal namelist} (~seq names ...)))
         (~datum "=")
@@ -102,6 +99,8 @@
          (define e (cst->ast #'es))
          `(assign (,(cdr n) ... ,(car n))
                   (,(cdr e) ... ,(car e))))]
+      [({~literal parlist} names)
+       (cst->ast #'names)]
       [({~literal namelist} (~seq names ...))
        (for/list ([n (syntax->list #'(names ...))]
                   #:when (not (eqv? (syntax->datum n) ",")))
@@ -110,10 +109,11 @@
        (for/list ([e (syntax->list #'(exprs ...))]
                   #:when (not (eqv? (syntax->datum e) ",")))
          (cst->ast e))]
+      [({~literal block} chunks ...)
+       (for/list ([c (syntax->list #'(chunks ...))])
+         (apply append (cst->ast c)))]
       [({~literal laststat} terms ...)
        (cst->ast #'(terms ...))]
-      [({~literal parlist} names ...)
-       (cst->ast #'(names ...))]
       [({~datum "return"} exprs)
        (begin
          (define es (cst->ast #'exprs))
@@ -135,9 +135,10 @@
          (displayln (syntax->datum #'body))
          (define fname (syntax->datum #'name))
          (define stmts (cst->ast #'body))
-         (displayln stmts)
+         (displayln (format "stmts: ~a" stmts))
          (define args (cst->ast #'names))
-         `(fn ,fname ,args ,(cdr stmts) ... ,(car stmts)))]
+         (displayln (format "args: ~a" args))
+         `(fn ,fname ,args (,(cdr stmts) ... ,(car stmts))))]
       [e
        (syntax->datum #'e)]
       [else #f])))
