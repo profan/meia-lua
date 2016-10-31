@@ -132,7 +132,6 @@
         ({~literal funcname} name)
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
        (begin
-         (displayln (syntax->datum #'body))
          (define fname (syntax->datum #'name))
          (define stmts (cst->ast #'body))
          (displayln (format "stmts: ~a" stmts))
