@@ -137,7 +137,7 @@
          (displayln (format "stmts: ~a" stmts))
          (define args (cst->ast #'names))
          (displayln (format "args: ~a" args))
-         `(fn ,fname ,args (,(cdr stmts) ... ,(car stmts))))]
+         `(fn ,fname ,args (begin ,(cdr stmts) ... ,(car stmts))))]
       [e
        (syntax->datum #'e)]
       [else #f])))
@@ -206,6 +206,7 @@
               (for/list ([lhs (cons x x*)] [rhs (cons e e*)])
                 `(binop ,o ,lhs ,rhs))))
            `(assign (,x* ... ,x) (,(cdr ops) ... ,(car ops))))]
+        ;; forms the case for expressions like x, y += call()
         [(op-assign ,o (,x* ... ,x) ,[e])
          `(assign (,x* ... ,x) (,e))])
   (Stmt ir))
