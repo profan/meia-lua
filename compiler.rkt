@@ -117,7 +117,7 @@
       [({~datum "return"} exprs)
        (begin
          (define es (cst->ast #'exprs))
-         `(ret (,(cdr es) ... ,(car es))))]
+         `(ret ,es ...))]
       [({~literal prefixexp} e)
        (cst->ast #'e)]
       [({~literal var} v)
@@ -171,7 +171,7 @@
         (fn n (n* ...) s)
         (while e s)
         (begin s* ...)
-        (ret e)
+        (ret e* ...)
         e)
   (Expr (e)
         x ;; variable
@@ -272,8 +272,8 @@
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
         [(begin ,s* ...)
          (format "~a" (format-list '() s* #:sep "\n"))]
-        [(ret ,e)
-         (format "return ~a" (Expr e))]))
+        [(ret ,e* ...)
+         (format "return ~a" (format-list '() e* #:sep ", "))]))
 
 ;; MANUAL AST FOR TESTING OK FUC
 (parse-L1 'x)
