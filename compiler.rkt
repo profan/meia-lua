@@ -133,11 +133,9 @@
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
        (begin
          (define fname (syntax->datum #'name))
-         (define stmts (cst->ast #'body))
-         (displayln (format "stmts: ~a" stmts))
-         (define fnargs (cst->ast #'names))
-         (displayln (format "fnargs: ~a" fnargs))
-         `(fn "hello_world" ,fnargs (begin ,(cdr stmts) ... (car stmts))))]
+         (define fnargs (map symbol->string (cst->ast #'names)))
+         (define stmts (apply append (cst->ast #'body)))
+         `(fn ,fname ,fnargs (begin ,stmts)))]
       [e
        (syntax->datum #'e)]
       [else #f])))
@@ -172,7 +170,7 @@
         (assign (x* ... x) (e* ... e))
         (fn n (n* ...) s)
         (while e s)
-        (begin s* ... s)
+        (begin s* ...)
         (ret e)
         e)
   (Expr (e)
@@ -269,11 +267,11 @@
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
         [(fn ,n (,n* ...) ,s)
-         (format "function ~a (~a) ~n ~a ~nend" n (format-list '() n*) (Stmt s))]
+         (format "function ~a (~a) ~n ~a ~nend" n (format-list '() n* #:sep ", ") (Stmt s))]
         [(while ,e ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
-        [(begin ,s* ... ,s)
-         (format "~a" (format-list s s* #:sep "\n"))]
+        [(begin ,s* ...)
+         (format "~a" (format-list '() s* #:sep "\n"))]
         [(ret ,e)
          (format "return ~a" (Expr e))]))
 
@@ -287,6 +285,7 @@
 (parse-L1 '(op-assign "+" (x) (binop "-" 35 25)))
 (lower-op-assign (parse-L1 '(op-assign "+" (x y) (24 (binop "-" 35 25)))))
 (lower-op-assign (parse-L1 '(fn "hello_world" () (ret (32)))))
+(generate-code (lower-op-assign (parse-L1 '(fn "hello_world" ("a" "b" "c") (begin (ret (32)))))))
 
 ;; codegen testing
 (displayln
