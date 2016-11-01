@@ -89,7 +89,7 @@
       [({~literal stat} {~datum "do"} block {~datum "end"})
        (begin
          (define bs (apply append (cst->ast #'block)))
-         `(begin ,(cdr bs) ... ,(car bs)))]
+         `(begin ,bs ...))]
       [({~literal stat} {~optional (~datum "local")}
         (~and ns ({~literal namelist} (~seq names ...)))
         (~datum "=")
