@@ -135,7 +135,7 @@
          (define fname (syntax->datum #'name))
          (define fnargs (map symbol->string (cst->ast #'names)))
          (define stmts (apply append (cst->ast #'body)))
-         `(fn ,fname ,fnargs (begin ,stmts)))]
+         `(fn ,fname (,fnargs ...) (begin ,stmts ...)))]
       [e
        (syntax->datum #'e)]
       [else #f])))
