@@ -246,7 +246,7 @@
       (define l
         (cond
           [(empty? e) e*]
-          [else (append e* (list e))]))
+          [else (cons e e*)]))
       (string-join
        (map (λ (n)
               (cond
