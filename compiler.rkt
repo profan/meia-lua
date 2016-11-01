@@ -97,8 +97,14 @@
        (begin
          (define n (cst->ast #'ns))
          (define e (cst->ast #'es))
+         (displayln e)
          `(assign (,(cdr n) ... ,(car n))
                   (,(cdr e) ... ,(car e))))]
+      [({~literal functioncall} name ({~literal args} {~datum "("} exprs {~datum ")"}))
+       (begin
+         (define fname (symbol->string (cst->ast #'name)))
+         (define fargs (cst->ast #'exprs))
+         `(call ,fname ,fargs ...))]
       [({~literal parlist} names)
        (cst->ast #'names)]
       [({~literal namelist} (~seq names ...))
@@ -136,6 +142,9 @@
          (define fnargs (map symbol->string (cst->ast #'names)))
          (define stmts (apply append (cst->ast #'body)))
          `(fn ,fname (,fnargs ...) (begin ,stmts ...)))]
+      [(es ...)
+       (for/list ([e (syntax->list #'(es ...))])
+         (cst->ast e))]
       [e
        (syntax->datum #'e)]
       [else #f])))
@@ -285,7 +294,8 @@
 (parse-L1 '(op-assign "+" (x) (binop "-" 35 25)))
 (lower-op-assign (parse-L1 '(op-assign "+" (x y) (24 (binop "-" 35 25)))))
 (lower-op-assign (parse-L1 '(fn "hello_world" () (ret (32)))))
-(generate-code (lower-op-assign (parse-L1 '(fn "hello_world" ("a" "b" "c") (begin (ret (32)))))))
+(displayln
+ (generate-code (lower-op-assign (parse-L1 '(fn "hello_world" ("a" "b" "c") (begin (ret (32))))))))
 
 ;; codegen testing
 (displayln
@@ -326,10 +336,11 @@
    (tokenize
     (open-input-string
      "do
-        local x, y = 24, 32
+        local x, y, z = 24, 32
         function hello_world(a, b, c)
           return a, b, c
         end
+        local f, g, h = hello_world(x, y, z)
       end"))))
 
 (pretty-print (syntax->datum test-syntax))
