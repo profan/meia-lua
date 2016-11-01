@@ -88,7 +88,7 @@
          (cst->ast s))]
       [({~literal stat} {~datum "do"} block {~datum "end"})
        (begin
-         (define bs (cst->ast #'block))
+         (define bs (apply append (cst->ast #'block)))
          `(begin ,(cdr bs) ... ,(car bs)))]
       [({~literal stat} {~optional (~datum "local")}
         (~and ns ({~literal namelist} (~seq names ...)))
@@ -111,7 +111,7 @@
          (cst->ast e))]
       [({~literal block} chunks ...)
        (for/list ([c (syntax->list #'(chunks ...))])
-         (apply append (cst->ast c)))]
+         (cst->ast c))]
       [({~literal laststat} terms ...)
        (cst->ast #'(terms ...))]
       [({~datum "return"} exprs)
@@ -135,9 +135,9 @@
          (define fname (syntax->datum #'name))
          (define stmts (cst->ast #'body))
          (displayln (format "stmts: ~a" stmts))
-         (define args (cst->ast #'names))
-         (displayln (format "args: ~a" args))
-         `(fn ,fname ,args (begin ,(cdr stmts) ... ,(car stmts))))]
+         (define fnargs (cst->ast #'names))
+         (displayln (format "fnargs: ~a" fnargs))
+         `(fn "hello_world" ,fnargs (begin ,(cdr stmts) ... (car stmts))))]
       [e
        (syntax->datum #'e)]
       [else #f])))
@@ -170,8 +170,8 @@
    (operator (o)))
   (Stmt (s)
         (assign (x* ... x) (e* ... e))
-        (fn n (n* ...) (s* ... s))
-        (while e s* ... s)
+        (fn n (n* ...) s)
+        (while e s)
         (begin s* ... s)
         (ret e)
         e)
@@ -268,10 +268,10 @@
          (format "~a = ~a"
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
-        [(fn ,n (,n* ...) (,s* ... ,s))
-         (format "function ~a (~a) ~n ~a ~nend" n (format-list '() n*) (format-list s s*))]
-        [(while ,e ,s* ... ,s)
-         (format "while ~a do ~n ~a ~nend" (Expr e) (format-list s s*))]
+        [(fn ,n (,n* ...) ,s)
+         (format "function ~a (~a) ~n ~a ~nend" n (format-list '() n*) (Stmt s))]
+        [(while ,e ,s)
+         (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
         [(begin ,s* ... ,s)
          (format "~a" (format-list s s* #:sep "\n"))]
         [(ret ,e)
