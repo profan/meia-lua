@@ -102,7 +102,7 @@
                   (,(cdr e) ... ,(car e))))]
       [({~literal functioncall} name ({~literal args} (~optional {~datum "("}) exprs (~optional {~datum ")"})))
        (begin
-         (define fname (symbol->string (cst->ast #'name)))
+         (define fname (cst->ast #'name))
          (define fexprs (cst->ast #'exprs))
          (define fargs
            (cond
@@ -142,8 +142,8 @@
         ({~literal funcname} name)
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
        (begin
-         (define fname (syntax->datum #'name))
-         (define fnargs (map symbol->string (cst->ast #'names)))
+         (define fname (string->symbol (syntax->datum #'name)))
+         (define fnargs (cst->ast #'names))
          (define stmts (apply append (cst->ast #'body)))
          `(fn ,fname (,fnargs ...) (begin ,stmts ...)))]
       [(es ...)
@@ -156,7 +156,7 @@
 
 (define (name? n)
   (define id-p (pregexp id-regexp))
-  (regexp-match-exact? id-p n))
+  (regexp-match-exact? id-p (symbol->string n)))
 
 (define (constant? x)
   (or (number? x)
@@ -253,12 +253,15 @@
       (string-join
        (map (λ (n)
               (cond
-                [(L0-Stmt? n) (Stmt n)]
                 [(L0-Expr? n) (Expr n)]
+                [(L0-Stmt? n) (Stmt n)]
                 [else n])) l) sep)))
   (Expr : Expr(e) -> * ()
         [,x (~a x)]
-        [,c (~a c)]
+        [,c
+         (cond
+           [(or (string? c) (char?  c)) (format "\"~a\"" c)]
+           [(number? c) (~a c)])]
         [(call ,n ,e* ...)
          (format "~a(~a)" n (format-list '() e* #:sep ", "))]
         [(unop ,o ,e)
@@ -293,12 +296,12 @@
 (parse-L1 '(assign (x) (10)))
 (parse-L1 '(assign (x y) (10 24)))
 (parse-L1 '(op-assign "+" (x) (25)))
-(lower-op-assign (parse-L1 '(op-assign "+" (x y z) (call "print" (25 32)))))
+(lower-op-assign (parse-L1 '(op-assign "+" (x y z) (call print (25 32)))))
 (parse-L1 '(op-assign "+" (x) (binop "-" 35 25)))
 (lower-op-assign (parse-L1 '(op-assign "+" (x y) (24 (binop "-" 35 25)))))
-(lower-op-assign (parse-L1 '(fn "hello_world" () (ret (32)))))
+(lower-op-assign (parse-L1 '(fn hello_world () (ret (32)))))
 (displayln
- (generate-code (lower-op-assign (parse-L1 '(fn "hello_world" ("a" "b" "c") (begin (ret (32))))))))
+ (generate-code (lower-op-assign (parse-L1 '(fn hello_world (a b c) (begin (ret (32))))))))
 
 ;; codegen testing
 (displayln
@@ -326,7 +329,7 @@
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '(access love "update")))))
+   (parse-L1 '(access love update)))))
 
 (displayln
  (generate-code
