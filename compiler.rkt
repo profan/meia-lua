@@ -150,8 +150,7 @@
        (for/list ([e (syntax->list #'(es ...))])
          (cst->ast e))]
       [e
-       (syntax->datum #'e)]
-      [else #f])))
+       (syntax->datum #'e)])))
 
 ;; AST parsing follows
 
