@@ -100,10 +100,14 @@
          (displayln e)
          `(assign (,(cdr n) ... ,(car n))
                   (,(cdr e) ... ,(car e))))]
-      [({~literal functioncall} name ({~literal args} {~datum "("} exprs {~datum ")"}))
+      [({~literal functioncall} name ({~literal args} (~optional {~datum "("}) exprs (~optional {~datum ")"})))
        (begin
          (define fname (symbol->string (cst->ast #'name)))
-         (define fargs (cst->ast #'exprs))
+         (define fexprs (cst->ast #'exprs))
+         (define fargs
+           (cond
+             [(list? fexprs) fexprs]
+             [else (list fexprs)]))
          `(call ,fname ,fargs ...))]
       [({~literal parlist} names)
        (cst->ast #'names)]
@@ -341,6 +345,7 @@
           return a, b, c
         end
         local f, g, h = hello_world(x, y, z)
+        local noparen = print \"hello, world\"
         local binopped = 25 + 32 * 42
         local unopped = -42
       end"))))
