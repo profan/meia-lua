@@ -5,32 +5,34 @@
 (require syntax/parse)
 
 (define operators
-  (make-hash
-   '(("+" ADD)
-     ("-" SUB)
-     ("*" MUL)
-     ("/" DIV)
-     ("^" POW)
-     ("%" MOD)
-     ("(" LPAREN)
-     (")" RPAREN)
-     ("{" LBRACKET)
-     ("}" RBRACKET)
-     ("[" LSQUARE)
-     ("]" RSQUARE)
-     ("<" LT)
-     ("<=" LTEQ)
-     (">" GT)
-     (">=" GTEQ)
-     ("==" EQEQ)
-     ("~=" NEQ)
-     ("..." VARIADIC)
-     (".." CONCAT)
-     (";" SEMICOLON)
-     ("." PERIOD)
-     ("," COMMA)
-     ("#" LEN)
-     ("=" EQ))))
+  '(("+" ADD)
+    ("-" SUB)
+    ("*" MUL)
+    ("/" DIV)
+    ("^" POW)
+    ("%" MOD)
+    ("(" LPAREN)
+    (")" RPAREN)
+    ("{" LBRACKET)
+    ("}" RBRACKET)
+    ("[" LSQUARE)
+    ("]" RSQUARE)
+    ("<" LT)
+    ("<=" LTEQ)
+    (">" GT)
+    (">=" GTEQ)
+    ("==" EQEQ)
+    ("~=" NEQ)
+    ("," COMMA)
+    ("..." VARIADIC)
+    (".." CONCAT)
+    (";" SEMICOLON)
+    ("." PERIOD)
+    ("#" LEN)
+    ("=" EQ)))
+
+(define operator-map
+  (make-hash operators))
 
 (define keywords
   (make-hash
@@ -57,17 +59,19 @@
      ("not" NOT))))
 
 (define (expand-operators ops)
-  (for/fold ([str ""]) ([op ops])
-    (string-append str (format "\\~a" op))))
+  (string-join
+   (for/list ([op ops])
+     (regexp-quote (car op)))
+   "|"))
 
 (define id-regexp "(\\p{L}|\\_)+")
+(define op-regexp (pregexp (format "\"[^\"]+\"|~a|\\p{N}+|~a" id-regexp (expand-operators operators))))
 
 (define (tokenize p)
-  (define ex-ops (expand-operators (hash-keys operators)))
-  (for/list ([b-str (regexp-match* (pregexp (format "\"[^\"]+\"|~a|\\p{N}+|[~a]" id-regexp ex-ops)) p)])
+  (for/list ([b-str (regexp-match* op-regexp p)])
     (define str (bytes->string/utf-8 b-str))
     (cond
-      [(hash-has-key? operators str) (token (car (hash-ref operators str)) str)]
+      [(hash-has-key? operator-map str) (token (car (hash-ref operator-map str)) str)]
       [(hash-has-key? keywords str) (token (car (hash-ref keywords str)) str)]
       [else
        (let* ([n (string->number str)])
@@ -167,7 +171,7 @@
   (symbol? x))
 
 (define (operator? x)
-  (hash-has-key? operators x))
+  (hash-has-key? operator-map x))
 
 (define (keyword? x)
   (hash-has-key? keywords x))
@@ -348,6 +352,9 @@
         end
         local f, g, h = hello_world(x, y, z)
         local noparen = print \"hello, world\"
+        function var_thing(a, ...)
+          return a
+        end
         local binopped = 25 + 32 * 42
         local unopped = -42
       end"))))
