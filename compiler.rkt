@@ -128,12 +128,12 @@
        (cst->ast #'e)]
       [({~literal var} v)
        (string->symbol (syntax->datum #'v))]
+      [(exp e0 ({~literal binop} op) e1)
+       `(binop ,(cst->ast #'op) ,(cst->ast #'e0) ,(cst->ast #'e1))]
+      [(exp ({~literal unop} op) e)
+       `(unop ,(cst->ast #'op) ,(cst->ast #'e))]
       [(exp e)
        (cst->ast #'e)]
-      [({~literal binop} o)
-       #t]
-      [({~literal unop} o)
-       #t]
       [({~literal stat} (~datum "function")
         ({~literal funcname} name)
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
@@ -341,6 +341,8 @@
           return a, b, c
         end
         local f, g, h = hello_world(x, y, z)
+        local binopped = 25 + 32 * 42
+        local unopped = -42
       end"))))
 
 (pretty-print (syntax->datum test-syntax))
