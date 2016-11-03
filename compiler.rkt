@@ -95,15 +95,17 @@
        (begin
          (define bs (apply append (cst->ast #'block)))
          `(begin ,bs ...))]
-      [({~literal stat} {~optional (~datum "local")}
+      [({~literal stat} {~optional (~and local (~datum "local")) #:defaults ([local #f])}
         (~and ns ({~literal namelist} (~seq names ...)))
         (~datum "=")
         (~and es ({~literal explist} (~seq exprs ...))))
        (begin
+         (define l (not (not #'local)))
          (define n (cst->ast #'ns))
          (define e (cst->ast #'es))
          (displayln e)
-         `(assign (,(cdr n) ... ,(car n))
+         `(assign ,l
+                  (,(cdr n) ... ,(car n))
                   (,(cdr e) ... ,(car e))))]
       [({~literal functioncall} name ({~literal args} (~optional {~datum "("}) exprs (~optional {~datum ")"})))
        (begin
@@ -171,9 +173,11 @@
   (regexp-match-exact? id-p (symbol->string n)))
 
 (define (constant? x)
-  (or (number? x)
-      (string? x)
-      (char? x)))
+  (or
+   (boolean? x)
+   (number? x)
+   (string? x)
+   (char? x)))
 
 (define (variable? x)
   (symbol? x))
@@ -191,7 +195,7 @@
    (variable (x))
    (operator (o)))
   (Stmt (s)
-        (assign (x* ... x) (e* ... e))
+        (assign c (x* ... x) (e* ... e))
         (fn n (n* ...) s)
         (while e s)
         (begin s* ...)
@@ -214,7 +218,7 @@
   (extends L0)
   (Stmt (s body)
         (+
-         (op-assign o (x* ... x) e))))
+         (op-assign c o (x* ... x) e))))
 
 (define-parser parse-L1 L1)
 
@@ -222,19 +226,19 @@
   (definitions)
   (Stmt : Stmt (ir) -> Stmt ()
         ;; turns x, y += 10,24 into x, y = x + 10, y + 24
-        [(op-assign ,o (,x* ... ,x) (,[e*] ... ,[e]))
+        [(op-assign ,c ,o (,x* ... ,x) (,[e*] ... ,[e]))
          (begin
            (define ops
              (with-output-language (L0 Expr)
               (for/list ([lhs (cons x x*)] [rhs (cons e e*)])
                 `(binop ,o ,lhs ,rhs))))
-           `(assign (,x* ... ,x) (,(cdr ops) ... ,(car ops))))]
+           `(assign ,c (,x* ... ,x) (,(cdr ops) ... ,(car ops))))]
         ;; TODO: forms the case for expressions like x, y += call()
         ;;  which here should become ...
         ;;  local tmp_x, tmp_y = call()
         ;;  x, y = x + tmp_x, tmp_y
-        [(op-assign ,o (,x* ... ,x) ,[e])
-         `(assign (,x* ... ,x) (,e))])
+        [(op-assign ,c ,o (,x* ... ,x) ,[e])
+         `(assign ,c (,x* ... ,x) (,e))])
   (Stmt ir))
 
 (language->s-expression L0)
@@ -289,8 +293,9 @@
         [(,e* ... ,e)
          (format-list e e* #:sep ", ")])
   (Stmt : Stmt(ir) -> *()
-        [(assign (,x* ... ,x) (,e* ... ,e))
-         (format "~a = ~a"
+        [(assign ,c (,x* ... ,x) (,e* ... ,e))
+         (format "~a~a = ~a"
+                 (if c "local " "")
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
         [(fn ,n (,n* ...) ,s)
@@ -305,12 +310,12 @@
 ;; MANUAL AST FOR TESTING OK FUC
 (parse-L1 'x)
 (parse-L1 '25)
-(parse-L1 '(assign (x) (10)))
-(parse-L1 '(assign (x y) (10 24)))
-(parse-L1 '(op-assign "+" (x) (25)))
-(lower-op-assign (parse-L1 '(op-assign "+" (x y z) (call print (25 32)))))
-(parse-L1 '(op-assign "+" (x) (binop "-" 35 25)))
-(lower-op-assign (parse-L1 '(op-assign "+" (x y) (24 (binop "-" 35 25)))))
+(parse-L1 '(assign #t (x) (10)))
+(parse-L1 '(assign #t (x y) (10 24)))
+(parse-L1 '(op-assign #t "+" (x) (25)))
+(lower-op-assign (parse-L1 '(op-assign #t "+" (x y z) (call print (25 32)))))
+(parse-L1 '(op-assign #t "+" (x) (binop "-" 35 25)))
+(lower-op-assign (parse-L1 '(op-assign #t "+" (x y) (24 (binop "-" 35 25)))))
 (lower-op-assign (parse-L1 '(fn hello_world () (ret (32)))))
 (displayln
  (generate-code (lower-op-assign (parse-L1 '(fn hello_world (a b c) (begin (ret (32))))))))
@@ -320,22 +325,22 @@
  (generate-code
   (lower-op-assign
    (parse-L1 '(begin
-                (assign (x) (0))
-                (while true (op-assign "+" (x) ((binop "*" 5 2)))))))))
+                (assign #t (x) (0))
+                (while true (op-assign #f "+" (x) ((binop "*" 5 2)))))))))
 
 (displayln
  (generate-code
   (lower-op-assign
    (parse-L1 '(begin
-                (assign (x y) (0 0))
-                (while true (op-assign "+" (x y) ((binop "*" 32 16) 48)))
+                (assign #t (x y) (0 0))
+                (while true (op-assign #f "+" (x y) ((binop "*" 32 16) 48)))
                 (ret (32 24)))))))
 
 (displayln
  (generate-code
   (lower-op-assign
    (parse-L1 '(begin
-                (assign (t1 t2 t3) ((table (1 2 3 4)) (table (5 6 7 8)) (table)))
+                (assign #t (t1 t2 t3) ((table (1 2 3 4)) (table (5 6 7 8)) (table)))
                 (ret (t1 t2 t3)))))))
 
 (displayln
@@ -366,7 +371,7 @@
       end"))))
 
 (pretty-print (syntax->datum test-syntax))
-(pretty-print (parse-L1 '(assign (x y) (10 24))))
+(pretty-print (parse-L1 '(assign #t (x y) (10 24))))
 (pretty-print (car (cst->ast test-syntax)))
 (displayln
  (generate-code
