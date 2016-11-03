@@ -107,7 +107,11 @@
          `(assign ,l
                   (,(cdr n) ... ,(car n))
                   (,(cdr e) ... ,(car e))))]
-      [({~literal functioncall} name ({~literal args} (~optional {~datum "("}) exprs (~optional {~datum ")"})))
+      [({~literal functioncall} name
+        ({~literal args}
+         (~optional {~datum "("})
+         exprs
+         (~optional {~datum ")"})))
        (begin
          (define fname (cst->ast #'name))
          (define fexprs (cst->ast #'exprs))
@@ -351,7 +355,7 @@
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '(index love 0)))))
+   (parse-L1 '(index (index love 0) 1)))))
 
 ;; cst to ast testing
 (define test-syntax
