@@ -158,14 +158,13 @@
       [({~literal function} {~datum "function"}
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
       (begin
-        (define l (not (not #'local)))
         (define fnargs (cst->ast #'names))
         (define stmts (apply append (cst->ast #'body)))
         `(fn (,fnargs ...) (begin ,stmts ...)))]
       [({~literal stat}
         (~optional (~and local {~datum "local"}) #:defaults ([local #'#f]))
         (~datum "function")
-        ({~literal funcname} name)
+        (~or ({~literal funcname} name) name)
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
        (begin
          (define l (not (not #'local)))
@@ -374,7 +373,7 @@
     (open-input-string
      "do
         local x, y, z = 24, 32
-        function hello_world(a, b, c)
+        local function hello_world(a, b, c)
           return a, b, c
         end
         local f, g, h = hello_world(x, y, z)
