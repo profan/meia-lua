@@ -95,7 +95,7 @@
        (begin
          (define bs (apply append (cst->ast #'block)))
          `(begin ,bs ...))]
-      [({~literal stat} {~optional (~and local (~datum "local")) #:defaults ([local #f])}
+      [({~literal stat} {~optional (~and local (~datum "local")) #:defaults ([local #'#f])}
         (~and ns ({~literal namelist} (~seq names ...)))
         (~datum "=")
         (~and es ({~literal explist} (~seq exprs ...))))
@@ -155,17 +155,21 @@
        `(unop ,(cst->ast #'op) ,(cst->ast #'e))]
       [(exp e)
        (cst->ast #'e)]
-      [({~literal stat} (~datum "function")
+      [({~literal stat}
+        (~optional (~and local {~datum "local"}) #:defaults ([local #'#f]))
+        (~datum "function")
         ({~literal funcname} name)
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
        (begin
+         (define l (not (not #'local)))
          (define fname (string->symbol (syntax->datum #'name)))
          (define fnargs (cst->ast #'names))
          (define stmts (apply append (cst->ast #'body)))
-         `(fn ,fname (,fnargs ...) (begin ,stmts ...)))]
+         `(assign ,l (,fname) ((fn (,fnargs ...) (begin ,stmts ...)))))]
       [(es ...)
        (for/list ([e (syntax->list #'(es ...))])
          (cst->ast e))]
+      ;; [(or {~datum "..."} {~datum })]
       [e
        (syntax->datum #'e)])))
 
@@ -199,7 +203,6 @@
    (operator (o)))
   (Stmt (s)
         (assign c (x* ... x) (e* ... e))
-        (fn n (n* ...) s)
         (while e s)
         (begin s* ...)
         (ret e* ...)
@@ -207,6 +210,7 @@
   (Expr (e)
         x ;; variable
         c ;; constant
+        (fn (n* ...) s)
         (call n e* ...)
         (access e n)
         (index e0 e1)
@@ -281,6 +285,8 @@
          (cond
            [(or (string? c) (char?  c)) (format "\"~a\"" c)]
            [(number? c) (~a c)])]
+        [(fn (,n* ...) ,s)
+         (format "function (~a) ~n ~a ~nend" (format-list '() n* #:sep ", ") (Stmt s))]
         [(call ,n ,e* ...)
          (format "~a(~a)" n (format-list '() e* #:sep ", "))]
         [(unop ,o ,e)
@@ -301,8 +307,6 @@
                  (if c "local " "")
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
-        [(fn ,n (,n* ...) ,s)
-         (format "function ~a (~a) ~n ~a ~nend" n (format-list '() n* #:sep ", ") (Stmt s))]
         [(while ,e ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
         [(begin ,s* ...)
@@ -319,9 +323,9 @@
 (lower-op-assign (parse-L1 '(op-assign #t "+" (x y z) (call print (25 32)))))
 (parse-L1 '(op-assign #t "+" (x) (binop "-" 35 25)))
 (lower-op-assign (parse-L1 '(op-assign #t "+" (x y) (24 (binop "-" 35 25)))))
-(lower-op-assign (parse-L1 '(fn hello_world () (ret (32)))))
+(lower-op-assign (parse-L1 '(fn () (ret (32)))))
 (displayln
- (generate-code (lower-op-assign (parse-L1 '(fn hello_world (a b c) (begin (ret (32))))))))
+ (generate-code (lower-op-assign (parse-L1 '(fn (a b c) (begin (ret (32))))))))
 
 ;; codegen testing
 (displayln
