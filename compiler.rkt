@@ -155,6 +155,13 @@
        `(unop ,(cst->ast #'op) ,(cst->ast #'e))]
       [(exp e)
        (cst->ast #'e)]
+      [({~literal function} {~datum "function"}
+        ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
+      (begin
+        (define l (not (not #'local)))
+        (define fnargs (cst->ast #'names))
+        (define stmts (apply append (cst->ast #'body)))
+        `(fn (,fnargs ...) (begin ,stmts ...)))]
       [({~literal stat}
         (~optional (~and local {~datum "local"}) #:defaults ([local #'#f]))
         (~datum "function")
@@ -373,6 +380,9 @@
         local f, g, h = hello_world(x, y, z)
         local noparen = print \"hello, world\"
         local paren = print(\"hello, world\", 25, 32, {})
+        local somefunc = function(a)
+          return a * 2
+        end
         local binopped = 25 + 32 * 42
         local unopped = -42
       end"))))
