@@ -135,8 +135,13 @@
          `(ret ,es ...))]
       [({~literal prefixexp} e)
        (cst->ast #'e)]
-      [({~literal tableconstructor} {~datum "{"} (~optional fieldlist) {~datum "}"})
-       `(table)]
+      [({~literal tableconstructor} {~datum "{"}
+        (~optional fieldlist #:defaults ([fieldlist #'()]))
+        {~datum "}"})
+       `(table ,(cst->ast #'fieldlist) ...)]
+      [({~literal fieldlist} fields ...)
+       (for/list ([f (syntax->list #'(fields ...))])
+         (cst->ast f))]
       [({~literal var} v)
        (string->symbol (syntax->datum #'v))]
       [(exp e0 ({~literal binop} op) e1)
