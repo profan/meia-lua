@@ -103,7 +103,6 @@
          (define l (not (not #'local)))
          (define n (cst->ast #'ns))
          (define e (cst->ast #'es))
-         (displayln e)
          `(assign ,l
                   (,(cdr n) ... ,(car n))
                   (,(cdr e) ... ,(car e))))]
