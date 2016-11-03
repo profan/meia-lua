@@ -26,8 +26,8 @@
     ("," COMMA)
     ("..." VARIADIC)
     (".." CONCAT)
-    (";" SEMICOLON)
     ("." PERIOD)
+    (";" SEMICOLON)
     ("#" LEN)
     ("=" EQ)))
 
@@ -135,6 +135,8 @@
          `(ret ,es ...))]
       [({~literal prefixexp} e)
        (cst->ast #'e)]
+      [({~literal tableconstructor} {~datum "{"} (~optional fieldlist) {~datum "}"})
+       `(table)]
       [({~literal var} v)
        (string->symbol (syntax->datum #'v))]
       [(exp e0 ({~literal binop} op) e1)
@@ -353,9 +355,7 @@
         end
         local f, g, h = hello_world(x, y, z)
         local noparen = print \"hello, world\"
-        function var_thing(a, ...)
-          return a
-        end
+        local paren = print(\"hello, world\", 25, 32, {})
         local binopped = 25 + 32 * 42
         local unopped = -42
       end"))))
