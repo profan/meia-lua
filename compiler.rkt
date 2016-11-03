@@ -145,7 +145,8 @@
         {~datum "}"})
        `(table ,(cst->ast #'fieldlist) ...)]
       [({~literal fieldlist} fields ...)
-       (for/list ([f (syntax->list #'(fields ...))])
+       (for/list ([f (syntax->list #'(fields ...))]
+                  #:when (not (eqv? (cst->ast f) ",")))
          (cst->ast f))]
       [({~literal var} v)
        (string->symbol (syntax->datum #'v))]
@@ -175,7 +176,6 @@
       [(es ...)
        (for/list ([e (syntax->list #'(es ...))])
          (cst->ast e))]
-      ;; [(or {~datum "..."} {~datum })]
       [e
        (syntax->datum #'e)])))
 
@@ -382,6 +382,7 @@
         local somefunc = function(a)
           return a * 2
         end
+        local some_table = {12, 24, 32, \"hello, world\"}
         local binopped = 25 + 32 * 42
         local unopped = -42
       end"))))
