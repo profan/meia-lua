@@ -65,9 +65,10 @@
    "|"))
 
 (define id-regexp "(\\p{L}|\\_)+")
-(define op-regexp (pregexp (format "\"[^\"]+\"|~a|\\p{N}+|~a" id-regexp (expand-operators operators))))
 
 (define (tokenize p)
+  (define ex-ops (expand-operators operators))
+  (define op-regexp (pregexp (format "\"[^\"]+\"|~a|\\p{N}+|~a" id-regexp ex-ops)))
   (for/list ([b-str (regexp-match* op-regexp p)])
     (define str (bytes->string/utf-8 b-str))
     (cond
