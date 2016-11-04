@@ -165,6 +165,13 @@
       [(exp e)
        (cst->ast #'e)]
       [({~literal stat}
+        {~datum "while"}
+        expr
+        {~datum "do"} block {~datum "end"})
+       (begin
+         (define body (apply append (cst->ast #'block)))
+         `(while ,(cst->ast #'expr) (begin #f ,body ...)))]
+      [({~literal stat}
         {~datum "for"}
         (~and ({~literal namelist} names ...) namelist)
         {~datum "in"}
@@ -420,6 +427,8 @@
             thing = 64
           end
           print(i, value)
+        end
+        while true do
         end
         local binopped = 25 + 32 * 42
         local unopped = -42
