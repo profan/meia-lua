@@ -105,7 +105,7 @@
         (~datum "=")
         (~and es ({~literal explist} (~seq exprs ...))))
        (begin
-         (define l (syntax->datum #'local))
+         (define l (not (not (syntax->datum #'local))))
          (define n (cst->ast #'ns))
          (define e (cst->ast #'es))
          `(assign ,l
@@ -201,7 +201,7 @@
         (~or ({~literal funcname} name) name)
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
        (begin
-         (define l (syntax->datum #'local))
+         (define l (not (not (syntax->datum #'local))))
          (define fname (string->symbol (syntax->datum #'name)))
          (define fnargs (cst->ast #'names))
          (define stmts (apply append (cst->ast #'body)))
