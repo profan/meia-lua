@@ -93,7 +93,7 @@
          (cst->ast s))]
       [({~literal stat} {~datum "do"} block {~datum "end"})
        (begin
-         (define bs (apply append (cst->ast #'block)))
+         (define bs (cst->ast #'block))
          `(begin #t ,bs ...))]
       [({~literal stat}
         {~optional
@@ -138,8 +138,8 @@
                   #:when (not (eqv? (syntax->datum e) ",")))
          (cst->ast e))]
       [({~literal block} chunks ...)
-       (for/list ([c (syntax->list #'(chunks ...))])
-         (cst->ast c))]
+       (apply append (for/list ([c (syntax->list #'(chunks ...))])
+          (cst->ast c)))]
       [({~literal laststat} terms ...)
        (cst->ast #'(terms ...))]
       [({~datum "return"} exprs)
@@ -169,7 +169,7 @@
         expr
         {~datum "do"} block {~datum "end"})
        (begin
-         (define body (apply append (cst->ast #'block)))
+         (define body (cst->ast #'block))
          `(while ,(cst->ast #'expr) (begin #f ,body ...)))]
       [({~literal stat}
         {~datum "repeat"}
@@ -177,7 +177,7 @@
         {~datum "until"}
         expr)
        (begin
-         (define body (apply append (cst->ast #'block)))
+         (define body (cst->ast #'block))
          (define test (cst->ast #'expr))
          `(repeat (begin #f ,body ...) ,test))]
       [({~literal stat}
@@ -191,7 +191,7 @@
        (begin
          (define ns (cst->ast #'namelist))
          (define es (first (cst->ast #'explist)))
-         (define body (apply append (cst->ast #'block)))
+         (define body (cst->ast #'block))
          `(for (,(cdr ns) ... ,(car ns)) ,es (begin #f ,body ...)))]
       [({~literal function} {~datum "function"}
         ({~literal funcbody}
@@ -200,7 +200,7 @@
          {~datum "end"}))
       (begin
         (define fnargs (cst->ast #'names))
-        (define stmts (apply append (cst->ast #'body)))
+        (define stmts (cst->ast #'body))
         `(fn (,fnargs ...) (begin #f ,stmts ...)))]
       [({~literal stat}
         (~optional
@@ -213,7 +213,7 @@
          (define l (not (not (syntax->datum #'local))))
          (define fname (string->symbol (syntax->datum #'name)))
          (define fnargs (cst->ast #'names))
-         (define stmts (apply append (cst->ast #'body)))
+         (define stmts (cst->ast #'body))
          `(assign ,l (,fname) ((fn (,fnargs ...) (begin #f ,stmts ...)))))]
       [(es ...)
        (for/list ([e (syntax->list #'(es ...))])
