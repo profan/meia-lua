@@ -419,6 +419,9 @@
         end
         local binopped = 25 + 32 * 42
         local unopped = -42
+        function vary_thing(a, ...)
+          return a
+        end
       end"))))
 
 (pretty-print (syntax->datum test-syntax))
