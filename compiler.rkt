@@ -166,9 +166,9 @@
         {~datum "end"})
        (begin
          (define ns (cst->ast #'namelist))
-         (define es (cst->ast #'explist))
-         (define body (cst->ast #'block))
-         `(for (,(cdr ns) ... ,(car ns)) ,es ,body))]
+         (define es (first (cst->ast #'explist)))
+         (define body (apply append (cst->ast #'block)))
+         `(for (,(cdr ns) ... ,(car ns)) ,es (begin ,body ...)))]
       [({~literal function} {~datum "function"}
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
       (begin
@@ -398,10 +398,12 @@
         local somefunc = function(a)
           return a * 2
         end
-        for i, value in pairs({12, 24}) do
-          thing = 32
-        end
+        x = 12
         local some_table = {12, 24, 32, \"hello, world\"}
+        for i, value in pairs(some_table) do
+          thing = 32
+          print(i, value)
+        end
         local binopped = 25 + 32 * 42
         local unopped = -42
       end"))))
