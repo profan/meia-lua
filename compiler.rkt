@@ -95,12 +95,17 @@
        (begin
          (define bs (apply append (cst->ast #'block)))
          `(begin ,bs ...))]
-      [({~literal stat} {~optional (~and local (~datum "local")) #:defaults ([local #'#f])}
-        (~and ns ({~literal namelist} (~seq names ...)))
+      [({~literal stat}
+        {~optional
+         (~and local (~datum "local"))
+         #:defaults ([local #'#f])}
+        (~and ns (~or
+                  ({~literal namelist} (~seq names ...))
+                  ({~literal varlist} (~seq vars ...))))
         (~datum "=")
         (~and es ({~literal explist} (~seq exprs ...))))
        (begin
-         (define l (not (not #'local)))
+         (define l (not (not (syntax->datum #'local))))
          (define n (cst->ast #'ns))
          (define e (cst->ast #'es))
          `(assign ,l
@@ -121,6 +126,9 @@
          `(call ,fname ,fargs ...))]
       [({~literal parlist} names)
        (cst->ast #'names)]
+      [({~literal varlist} (~seq vars ...))
+       (for/list ([v (syntax->list #'(vars ...))])
+         (cst->ast v))]
       [({~literal namelist} (~seq names ...))
        (for/list ([n (syntax->list #'(names ...))]
                   #:when (not (eqv? (syntax->datum n) ",")))
