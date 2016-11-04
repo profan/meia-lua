@@ -156,6 +156,19 @@
        `(unop ,(cst->ast #'op) ,(cst->ast #'e))]
       [(exp e)
        (cst->ast #'e)]
+      [({~literal stat}
+        {~datum "for"}
+        (~and ({~literal namelist} names ...) namelist)
+        {~datum "in"}
+        (~and {{~literal explist} exprs ...} explist)
+        {~datum "do"}
+        (~and ({~literal block} stmts ...) block)
+        {~datum "end"})
+       (begin
+         (define ns (cst->ast #'namelist))
+         (define es (cst->ast #'explist))
+         (define body (cst->ast #'block))
+         `(for (,(cdr ns) ... ,(car ns)) ,es ,body))]
       [({~literal function} {~datum "function"}
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
       (begin
@@ -210,6 +223,7 @@
   (Stmt (s)
         (assign c (x* ... x) (e* ... e))
         (while e s)
+        (for (n* ... n) e s)
         (begin s* ...)
         (ret e* ...)
         e)
@@ -289,7 +303,7 @@
         [,x (~a x)]
         [,c
          (cond
-           [(or (string? c) (char?  c)) (format "\"~a\"" c)]
+           [(or (string? c) (char? c)) (format "\"~a\"" c)]
            [(number? c) (~a c)])]
         [(fn (,n* ...) ,s)
          (format "function (~a) ~n ~a ~nend" (format-list '() n* #:sep ", ") (Stmt s))]
@@ -315,6 +329,8 @@
                  (format-list e e* #:sep ", "))]
         [(while ,e ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
+        [(for (,n* ... ,n) ,e ,s)
+         (format "for ~a in ~a do ~n ~a ~nend" (format-list n n* #:sep ", ") (Expr e) (Stmt s))]
         [(begin ,s* ...)
          (format "~a" (format-list '() s* #:sep "\n"))]
         [(ret ,e* ...)
@@ -381,6 +397,9 @@
         local paren = print(\"hello, world\", 25, 32, {})
         local somefunc = function(a)
           return a * 2
+        end
+        for i, value in pairs({12, 24}) do
+          thing = 32
         end
         local some_table = {12, 24, 32, \"hello, world\"}
         local binopped = 25 + 32 * 42
