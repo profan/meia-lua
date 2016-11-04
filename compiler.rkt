@@ -165,6 +165,12 @@
       [(exp e)
        (cst->ast #'e)]
       [({~literal stat}
+        {~datum "if"}
+        expr
+        {~datum "then"}
+        block)
+       #f]
+      [({~literal stat}
         {~datum "while"}
         expr
         {~datum "do"} block {~datum "end"})
@@ -218,8 +224,12 @@
       [(es ...)
        (for/list ([e (syntax->list #'(es ...))])
          (cst->ast e))]
-      [{~datum "true"} 'true]
-      [{~datum "false"} 'false]
+      [(~and s
+        (~or
+         {~datum "true"}
+         {~datum "false"}
+         {~datum "nil"}))
+       (string->symbol (syntax->datum #'s))]
       [e
        (syntax->datum #'e)])))
 
@@ -455,6 +465,15 @@
         until other_lim == 10
         local binopped = 25 + 32 * 42
         local unopped = -42
+        if true then
+          world = true
+        elseif false then
+          world = false
+        elseif 24 then
+          world = 42
+        else
+          world = nil
+        end
       end"))))
 
 (pretty-print (syntax->datum test-syntax))
