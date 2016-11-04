@@ -172,6 +172,15 @@
          (define body (apply append (cst->ast #'block)))
          `(while ,(cst->ast #'expr) (begin #f ,body ...)))]
       [({~literal stat}
+        {~datum "repeat"}
+        block
+        {~datum "until"}
+        expr)
+       (begin
+         (define body (apply append (cst->ast #'block)))
+         (define test (cst->ast #'expr))
+         `(repeat (begin #f ,body ...) ,test))]
+      [({~literal stat}
         {~datum "for"}
         (~and ({~literal namelist} names ...) namelist)
         {~datum "in"}
@@ -245,6 +254,7 @@
   (Stmt (s)
         (assign c (x* ... x) (e* ... e))
         (while e s)
+        (repeat s e)
         (for (n* ... n) e s)
         (begin c s* ...)
         (ret e* ...)
@@ -351,6 +361,8 @@
                  (format-list e e* #:sep ", "))]
         [(while ,e ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
+        [(repeat ,s ,e)
+         (format "repeat ~n ~a ~nuntil ~a" (Stmt s) (Expr e))]
         [(for (,n* ... ,n) ,e ,s)
          (format "for ~a in ~a do ~n ~a ~nend" (format-list n n* #:sep ", ") (Expr e) (Stmt s))]
         [(begin ,c ,s* ...)
@@ -437,6 +449,10 @@
         while lim < 10 do
           lim = lim + 1
         end
+        local other_lim = 10
+        repeat
+          other_lim = other_lim + 1
+        until other_lim == 10
         local binopped = 25 + 32 * 42
         local unopped = -42
       end"))))
