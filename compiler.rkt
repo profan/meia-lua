@@ -184,12 +184,14 @@
         (define stmts (apply append (cst->ast #'body)))
         `(fn (,fnargs ...) (begin ,stmts ...)))]
       [({~literal stat}
-        (~optional (~and local {~datum "local"}) #:defaults ([local #'#f]))
+        (~optional
+         (~and local {~datum "local"})
+         #:defaults ([local #'#f]))
         (~datum "function")
         (~or ({~literal funcname} name) name)
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
        (begin
-         (define l (not (not #'local)))
+         (define l (not (not (syntax->datum #'local))))
          (define fname (string->symbol (syntax->datum #'name)))
          (define fnargs (cst->ast #'names))
          (define stmts (apply append (cst->ast #'body)))
@@ -407,6 +409,9 @@
           return a * 2
         end
         x = 12
+        function global_func(x, y, z)
+          print \"global: hello world!\"
+        end
         local some_table = {12, 24, 32, \"hello, world\"}
         for i, value in pairs(some_table) do
           thing = 32
