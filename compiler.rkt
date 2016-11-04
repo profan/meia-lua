@@ -94,7 +94,7 @@
       [({~literal stat} {~datum "do"} block {~datum "end"})
        (begin
          (define bs (apply append (cst->ast #'block)))
-         `(begin ,bs ...))]
+         `(begin #t ,bs ...))]
       [({~literal stat}
         {~optional
          (~and local (~datum "local"))
@@ -176,13 +176,13 @@
          (define ns (cst->ast #'namelist))
          (define es (first (cst->ast #'explist)))
          (define body (apply append (cst->ast #'block)))
-         `(for (,(cdr ns) ... ,(car ns)) ,es (begin ,body ...)))]
+         `(for (,(cdr ns) ... ,(car ns)) ,es (begin #f ,body ...)))]
       [({~literal function} {~datum "function"}
         ({~literal funcbody} {~datum "("} names {~datum ")"} body {~datum "end"}))
       (begin
         (define fnargs (cst->ast #'names))
         (define stmts (apply append (cst->ast #'body)))
-        `(fn (,fnargs ...) (begin ,stmts ...)))]
+        `(fn (,fnargs ...) (begin #f ,stmts ...)))]
       [({~literal stat}
         (~optional
          (~and local {~datum "local"})
@@ -195,7 +195,7 @@
          (define fname (string->symbol (syntax->datum #'name)))
          (define fnargs (cst->ast #'names))
          (define stmts (apply append (cst->ast #'body)))
-         `(assign ,l (,fname) ((fn (,fnargs ...) (begin ,stmts ...)))))]
+         `(assign ,l (,fname) ((fn (,fnargs ...) (begin #f ,stmts ...)))))]
       [(es ...)
        (for/list ([e (syntax->list #'(es ...))])
          (cst->ast e))]
@@ -234,7 +234,7 @@
         (assign c (x* ... x) (e* ... e))
         (while e s)
         (for (n* ... n) e s)
-        (begin s* ...)
+        (begin c s* ...)
         (ret e* ...)
         e)
   (Expr (e)
@@ -341,8 +341,9 @@
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
         [(for (,n* ... ,n) ,e ,s)
          (format "for ~a in ~a do ~n ~a ~nend" (format-list n n* #:sep ", ") (Expr e) (Stmt s))]
-        [(begin ,s* ...)
-         (format "~a" (format-list '() s* #:sep "\n"))]
+        [(begin ,c ,s* ...)
+         (define stmts (format "~a" (format-list '() s* #:sep "\n")))
+         (if c (format "do ~n ~a ~nend" stmts) stmts)]
         [(ret ,e* ...)
          (format "return ~a" (format-list '() e* #:sep ", "))]))
 
@@ -357,20 +358,20 @@
 (lower-op-assign (parse-L1 '(op-assign #t "+" (x y) (24 (binop "-" 35 25)))))
 (lower-op-assign (parse-L1 '(fn () (ret (32)))))
 (displayln
- (generate-code (lower-op-assign (parse-L1 '(fn (a b c) (begin (ret (32))))))))
+ (generate-code (lower-op-assign (parse-L1 '(fn (a b c) (begin #f (ret (32))))))))
 
 ;; codegen testing
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '(begin
+   (parse-L1 '(begin #t
                 (assign #t (x) (0))
                 (while true (op-assign #f "+" (x) ((binop "*" 5 2)))))))))
 
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '(begin
+   (parse-L1 '(begin #t
                 (assign #t (x y) (0 0))
                 (while true (op-assign #f "+" (x y) ((binop "*" 32 16) 48)))
                 (ret (32 24)))))))
@@ -378,7 +379,7 @@
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '(begin
+   (parse-L1 '(begin #f
                 (assign #t (t1 t2 t3) ((table (1 2 3 4)) (table (5 6 7 8)) (table)))
                 (ret (t1 t2 t3)))))))
 
@@ -415,13 +416,13 @@
         local some_table = {12, 24, 32, \"hello, world\"}
         for i, value in pairs(some_table) do
           thing = 32
+          do
+            thing = 64
+          end
           print(i, value)
         end
         local binopped = 25 + 32 * 42
         local unopped = -42
-        function vary_thing(a, ...)
-          return a
-        end
       end"))))
 
 (pretty-print (syntax->datum test-syntax))
