@@ -28,4 +28,4 @@ Well, Lua; for now at least.
 
 License
 ----------------
-MIT/X11, See [LICENSE](LICENSE)
+??? To be cleared up what I can actually license this under!
