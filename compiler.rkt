@@ -425,7 +425,7 @@
         function global_func(x, y, z)
           print \"global: hello world!\"
         end
-        local some_table = {12, 24, 32, \"hello, world\"}
+        local some_table = {12, 24, 32, \"hello, world\", {true, {14, 24}}}
         for i, value in pairs(some_table) do
           thing = 32
           do
@@ -433,7 +433,9 @@
           end
           print(i, value)
         end
-        while true do
+        local lim = 0
+        while lim < 10 do
+          lim = lim + 1
         end
         local binopped = 25 + 32 * 42
         local unopped = -42
