@@ -209,6 +209,8 @@
       [(es ...)
        (for/list ([e (syntax->list #'(es ...))])
          (cst->ast e))]
+      [{~datum "true"} 'true]
+      [{~datum "false"} 'false]
       [e
        (syntax->datum #'e)])))
 
