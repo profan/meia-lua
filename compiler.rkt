@@ -375,7 +375,7 @@
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
         [(if ,e ,s ,s?)
-         (format "if ~a then ~n ~a end" (Expr e) (Stmt s))]
+         (format "if ~a then ~n ~a ~nend" (Expr e) (Stmt s))]
         [(while ,e ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
         [(repeat ,s ,e)
