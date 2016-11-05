@@ -232,7 +232,8 @@
         (~or
          {~datum "true"}
          {~datum "false"}
-         {~datum "nil"}))
+         {~datum "nil"}
+         {~datum "..."}))
        (string->symbol (syntax->datum #'s))]
       [e
        (syntax->datum #'e)])))
@@ -472,6 +473,9 @@
         until other_lim == 10
         local binopped = 25 + 32 * 42
         local unopped = -42
+        function varfunc(a, ...)
+          return a, ...
+        end
         if true then
           world = true
         end
