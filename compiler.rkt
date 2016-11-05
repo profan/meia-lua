@@ -168,8 +168,12 @@
         {~datum "if"}
         expr
         {~datum "then"}
-        block)
-       #f]
+        block
+        {~datum "end"})
+       (begin
+         (define e (cst->ast #'expr))
+         (define body (cst->ast #'block))
+         `(if ,e (begin #f ,body ...) nil))]
       [({~literal stat}
         {~datum "while"}
         expr
@@ -265,6 +269,7 @@
         (assign c (x* ... x) (e* ... e))
         (while e s)
         (repeat s e)
+        (if e s s?)
         (for (n* ... n) e s)
         (begin c s* ...)
         (ret e* ...)
@@ -369,6 +374,8 @@
                  (if c "local " "")
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
+        [(if ,e ,s ,s?)
+         (format "if ~a then ~n ~a end" (Expr e) (Stmt s))]
         [(while ,e ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
         [(repeat ,s ,e)
@@ -467,12 +474,6 @@
         local unopped = -42
         if true then
           world = true
-        elseif false then
-          world = false
-        elseif 24 then
-          world = 42
-        else
-          world = nil
         end
       end"))))
 
