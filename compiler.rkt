@@ -252,7 +252,7 @@
   (define id-p (pregexp id-regexp))
   (or
    (regexp-match-exact? id-p (symbol->string n))
-   (eq? n '...)))
+   (eq? n '...))) ;; FIXME: this is pretty ...... horrible?
 
 (define (constant? x)
   (or
