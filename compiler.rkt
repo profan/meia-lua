@@ -181,7 +181,7 @@
        (begin
          (define e (cst->ast #'expr))
          (define body (cst->ast #'block))
-         `(if ,e (begin #f ,body ...) nil))]
+         `(if ,e (begin #f ,body ...) #f))]
       [({~literal stat}
         {~datum "while"}
         expr
@@ -386,7 +386,12 @@
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
         [(if ,e ,s ,s?)
-         (format "if ~a then ~n ~a ~nend" (Expr e) (Stmt s))]
+         (begin
+           (define els
+             (match s?
+               [#f ""]
+               [es (Stmt s?)]))
+           (format "if ~a then ~n ~a ~a~nend" (Expr e) (Stmt s) els))]
         [(while ,e ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
         [(repeat ,s ,e)
@@ -394,8 +399,9 @@
         [(for (,n* ... ,n) ,e ,s)
          (format "for ~a in ~a do ~n ~a ~nend" (format-list n n* #:sep ", ") (Expr e) (Stmt s))]
         [(begin ,c ,s* ...)
-         (define stmts (format "~a" (format-list '() s* #:sep "\n")))
-         (if c (format "do ~n ~a ~nend" stmts) stmts)]
+         (begin
+           (define stmts (format "~a" (format-list '() s* #:sep "\n")))
+           (if c (format "do ~n ~a ~nend" stmts) stmts))]
         [(ret ,e* ...)
          (format "return ~a" (format-list '() e* #:sep ", "))]))
 
