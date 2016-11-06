@@ -124,8 +124,16 @@
              [(list? fexprs) fexprs]
              [else (list fexprs)]))
          `(call ,fname ,fargs ...))]
-      [({~literal parlist} names)
-       (cst->ast #'names)]
+      [({~literal parlist} names ...)
+       (begin
+         (define acc-ns
+           (for/fold ([ns '()])
+                     ([n (cst->ast #'(names ...))]
+                      #:when (not (eqv? n ",")))
+             (cond
+               [(list? n) (append ns n)]
+               [else (append ns (list n))])))
+         acc-ns)]
       [({~literal varlist} (~seq vars ...))
        (for/list ([v (syntax->list #'(vars ...))])
          (cst->ast v))]
@@ -242,7 +250,9 @@
 
 (define (name? n)
   (define id-p (pregexp id-regexp))
-  (regexp-match-exact? id-p (symbol->string n)))
+  (or
+   (regexp-match-exact? id-p (symbol->string n))
+   (eq? n '...)))
 
 (define (constant? x)
   (or
@@ -474,7 +484,7 @@
         local binopped = 25 + 32 * 42
         local unopped = -42
         function varfunc(a, ...)
-          return a, ...
+          return ...
         end
         if true then
           world = true
