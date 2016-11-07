@@ -183,13 +183,13 @@
           (or
            {~datum "elseif"}
            {~datum "else"}))
-         #:defaults ([els #'#f]))
+         #:defaults ([els #f]))
          {~datum "end"})
        (begin
          (define e (cst->ast #'expr))
          (define body (cst->ast #'block))
          (define else-body
-           (match (syntax->datum #'els)
+           (match #'els
              [#f #f]
              [_ (cst->ast #'els)]))
          `(if ,e (begin #f ,body ...) ,else-body))]
