@@ -177,7 +177,26 @@
         expr
         {~datum "then"}
         block
-        {~datum "end"})
+        (~optional
+         (~and
+          els
+          (or
+           {~datum "elseif"}
+           {~datum "else"}))
+         #:defaults ([els #'#f]))
+         {~datum "end"})
+       (begin
+         (define e (cst->ast #'expr))
+         (define body (cst->ast #'block))
+         (define else-body
+           (match (syntax->datum #'els)
+             [#f #f]
+             [_ (cst->ast #'els)]))
+         `(if ,e (begin #f ,body ...) ,else-body))]
+      [({~datum "elseif"}
+        expr
+        {~datum "then"}
+        block)
        (begin
          (define e (cst->ast #'expr))
          (define body (cst->ast #'block))
@@ -494,6 +513,8 @@
         end
         if true then
           world = true
+        elseif false then
+          world = false
         end
       end"))))
 
