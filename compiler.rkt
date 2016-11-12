@@ -72,8 +72,10 @@
   (for/list ([b-str (regexp-match* op-regexp p)])
     (define str (bytes->string/utf-8 b-str))
     (cond
-      [(hash-has-key? operator-map str) (token (car (hash-ref operator-map str)) str)]
-      [(hash-has-key? keywords str) (token (car (hash-ref keywords str)) str)]
+      [(hash-has-key? operator-map str)
+       (token (car (hash-ref operator-map str)) str)]
+      [(hash-has-key? keywords str)
+       (token (car (hash-ref keywords str)) str)]
       [else
        (let* ([n (string->number str)])
          (cond
