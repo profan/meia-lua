@@ -289,7 +289,7 @@
 (define (keyword? x)
   (hash-has-key? keywords x))
 
-(define-language L0
+(define-language Lua
   (terminals
    (name (n))
    (constant (c))
@@ -316,24 +316,24 @@
         (binop o e0 e1)
         (e* ... e)))
 
-(define-parser parse-L0 L0)
+(define-parser parse-Lua Lua)
 
 (define-language L1
-  (extends L0)
+  (extends Lua)
   (Stmt (s body)
         (+
          (op-assign c o (x* ... x) e))))
 
 (define-parser parse-L1 L1)
 
-(define-pass lower-op-assign : L1 (ir) -> L0 ()
+(define-pass lower-op-assign : L1 (ir) -> Lua ()
   (definitions)
   (Stmt : Stmt (ir) -> Stmt ()
         ;; turns x, y += 10,24 into x, y = x + 10, y + 24
         [(op-assign ,c ,o (,x* ... ,x) (,[e*] ... ,[e]))
          (begin
            (define ops
-             (with-output-language (L0 Expr)
+             (with-output-language (Lua Expr)
               (for/list ([lhs (cons x x*)] [rhs (cons e e*)])
                 `(binop ,o ,lhs ,rhs))))
            `(assign ,c (,x* ... ,x) (,(cdr ops) ... ,(car ops))))]
@@ -345,7 +345,7 @@
          `(assign ,c (,x* ... ,x) (,e))])
   (Stmt ir))
 
-(language->s-expression L0)
+(language->s-expression Lua)
 (language->s-expression L1)
 
 (define (debug-print-data str)
@@ -363,7 +363,7 @@
 (debug-print-data "local x, y, z = 16, 24, 32")
 (debug-print-data "local thing = 25 + 35")
 
-(define-pass generate-code : L0 (ir) -> * ()
+(define-pass generate-code : Lua (ir) -> * ()
   (definitions
     (define (format-list e e* #:sep [sep ""])
       (define l
@@ -373,8 +373,8 @@
       (string-join
        (map (λ (n)
               (cond
-                [(L0-Expr? n) (Expr n)]
-                [(L0-Stmt? n) (Stmt n)]
+                [(Lua-Expr? n) (Expr n)]
+                [(Lua-Stmt? n) (Stmt n)]
                 [else n])) l) sep)))
   (Expr : Expr(e) -> * ()
         [,x (~a x)]
