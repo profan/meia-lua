@@ -175,26 +175,20 @@
       [(exp e)
        (cst->ast #'e)]
       [({~literal stat}
-        {~datum "if"}
-        expr
-        {~datum "then"}
-        block
-        (~optional
-         (~and
-          els
-          (or
-           {~datum "elseif"}
-           {~datum "else"}))
-         #:defaults ([els #f]))
-         {~datum "end"})
+        (~and
+         stmts
+         (((~or
+            {~datum "if"}
+            {~datum "elseif"}
+            {~datum "else"})
+           expr
+           (~optional {~datum "then"})
+           block) ...))
+        {~datum "end"})
        (begin
-         (define e (cst->ast #'expr))
-         (define body (cst->ast #'block))
-         (define else-body
-           (match #'els
-             [#f #f]
-             [_ (cst->ast #'els)]))
-         `(if ,e (begin #f ,body ...) ,else-body))]
+         (define e (cst->ast #'stmts))
+         (define body #f)
+         `(if ,e (begin #f ,body ...) #f))]
       [({~datum "elseif"}
         expr
         {~datum "then"}
