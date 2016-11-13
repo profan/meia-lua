@@ -133,15 +133,13 @@
 
 (define-syntax-class cst/fieldlist
   (pattern
-   ({~datum "{"} cst/field {~datum "}"})
-   ))
+   ({~datum "{"} cst/field {~datum "}"})))
 
 (define-syntax-class cst/field
   (pattern
    (~or
     ({~datum "{"} cst/expr {~datum "}"} {~datum "="} cst/expr)
-    ({~literal var})
-    )))
+    ({~literal var}))))
 
 (define-syntax-class cst/binop)
 
@@ -157,9 +155,24 @@
     cst/function
     cst/prefixexp
     (cst/expr cst/binop cst/expr)
-    (cst/unop cst/expr))
+    (cst/unop cst/expr))))
 
-   ))
+(define-syntax-class cst/var
+  (pattern
+   (~or
+    var:id
+    (pe:cst/prefixexp {~datum "{"} e:cst/expr {~datum "}"})
+    (pe:cst/prefixexp {~datum "."} var:id))))
+
+(define-syntax-class cst/funcname
+  (pattern
+   (var:id (~seq {~datum "."} v:id) (~optional ({~datum ":"} v:id)))))
+
+(define-syntax-class cst/laststat
+  (pattern
+   (~or
+    ({~datum "return"} (~optional cst/explist))
+    {~datum "break"})))
 
 (define-syntax-class cst/stat
   (pattern
