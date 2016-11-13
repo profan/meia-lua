@@ -87,11 +87,91 @@
 
 ;; CST to AST transformer here
 
-(define-splicing-syntax-class cst/namelist
-  (pattern ({~literal namelist} (~seq n:id ...))))
 
 (define-splicing-syntax-class cst/varlist
   (pattern ({~literal varlist} (~seq v:id ...))))
+
+(define-splicing-syntax-class cst/namelist
+  (pattern
+   ({~literal namelist} (~seq n:id ...))))
+
+(define-syntax-class cst/explist
+  (pattern
+   ((cst/expr (~optional {~datum ","})) ...)))
+
+(define-syntax-class cst/functioncall
+  (pattern
+   (~or
+    (cst/prefixexp cst/args)
+    (cst/prefixexp {~datum ":"} var:id cst/args))))
+
+(define-syntax-class cst/args
+  (pattern
+   (~or
+    ({~datum "("} (~optional cst/explist) {~datum ")"})
+    cst/tableconstructor
+    str)))
+
+(define-syntax-class cst/function
+  (pattern
+   ({~datum "function"} cst/funcbody)))
+
+(define-syntax-class cst/funcbody
+  (pattern
+   ({~datum "("} (~optional cst/parlist) {~datum ")"} cst/block {~datum "end"})))
+
+(define-syntax-class cst/prefixexp
+  (pattern
+   (~or
+    cst/var
+    cst/functioncall
+    ({~datum "("} cst/expr {~datum ")"}))))
+
+(define-syntax-class cst/tableconstructor
+  (pattern
+   ({~datum "{"} (~optional cst/fieldlist) {~datum "}"})))
+
+(define-syntax-class cst/fieldlist
+  (pattern
+   ({~datum "{"} cst/field {~datum "}"})
+   ))
+
+(define-syntax-class cst/field
+  (pattern
+   (~or
+    ({~datum "{"} cst/expr {~datum "}"} {~datum "="} cst/expr)
+    ({~literal var})
+    )))
+
+(define-syntax-class cst/binop)
+
+(define-syntax-class cst/unop)
+
+(define-syntax-class cst/expr
+  (pattern
+   (~or
+    {~datum "nil"}
+    {~datum "false"}
+    {~datum "true"}
+    {~datum "..."}
+    cst/function
+    cst/prefixexp
+    (cst/expr cst/binop cst/expr)
+    (cst/unop cst/expr))
+
+   ))
+
+(define-syntax-class cst/stat
+  (pattern
+   (~or
+    cst/functioncall
+    ({~datum "do"} cst/block {~datum "end"})
+    ({~datum "while"} cst/expr {~datum "do"} cst/block {~datum "end"})
+    ({~datum "repeat"} cst/block {~datum "until"} cst/expr)
+    ({~datum "if"} cst/expr {~datum "then"} cst/block
+     (~seq {~datum "elseif"} cst/expr {~datum "then"} cst/block)
+     (~optional {~datum "else"} cst/block)
+     {~datum "end"})))
 
 (define (cst->ast cst)
   (with-output-language (L1 Stmt)
@@ -186,11 +266,17 @@
         expr
         {~datum "then"}
         block
-        {~datum "end"})
+        (~optional {~datum "end"}))
        (begin
          (define e (cst->ast #'expr))
          (define body (cst->ast #'block))
          `(if ,e (begin #f ,body ...) #f))]
+      [({~datum "elseif"}
+        expr
+        {~datum "then"}
+        block
+        (~optional {~datum "end"}))
+       #f]
       [({~literal stat}
         {~datum "while"}
         expr
@@ -504,6 +590,8 @@
         end
         if true then
           world = true
+        elseif false then
+          world = false
         end
       end"))))
 
