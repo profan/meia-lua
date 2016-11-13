@@ -87,6 +87,12 @@
 
 ;; CST to AST transformer here
 
+(define-splicing-syntax-class cst/namelist
+  (pattern ({~literal namelist} (~seq n:id ...))))
+
+(define-splicing-syntax-class cst/varlist
+  (pattern ({~literal varlist} (~seq v:id ...))))
+
 (define (cst->ast cst)
   (with-output-language (L1 Stmt)
     (syntax-parse cst
@@ -101,9 +107,10 @@
         {~optional
          (~and local (~datum "local"))
          #:defaults ([local #'#f])}
-        (~and ns (~or
-                  ({~literal namelist} (~seq names ...))
-                  ({~literal varlist} (~seq vars ...))))
+        (~and ns
+              (~or
+               cst/namelist
+               cst/varlist))
         (~datum "=")
         (~and es ({~literal explist} (~seq exprs ...))))
        (begin
@@ -175,24 +182,11 @@
       [(exp e)
        (cst->ast #'e)]
       [({~literal stat}
-        (~and
-         stmts
-         (((~or
-            {~datum "if"}
-            {~datum "elseif"}
-            {~datum "else"})
-           expr
-           (~optional {~datum "then"})
-           block) ...))
-        {~datum "end"})
-       (begin
-         (define e (cst->ast #'stmts))
-         (define body #f)
-         `(if ,e (begin #f ,body ...) #f))]
-      [({~datum "elseif"}
+        {~datum "if"}
         expr
         {~datum "then"}
-        block)
+        block
+        {~datum "end"})
        (begin
          (define e (cst->ast #'expr))
          (define body (cst->ast #'block))
@@ -509,8 +503,6 @@
         end
         if true then
           world = true
-        elseif false then
-          world = false
         end
       end"))))
 
