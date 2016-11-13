@@ -330,7 +330,7 @@
         ;; TODO: forms the case for expressions like x, y += call()
         ;;  which here should become ...
         ;;  local tmp_x, tmp_y = call()
-        ;;  x, y = x + tmp_x, tmp_y
+        ;;  x, y = x + tmp_x, y + tmp_y
         [(op-assign ,c ,o (,x* ... ,x) ,[e])
          `(assign ,c (,x* ... ,x) (,e))])
   (Stmt ir))
@@ -495,10 +495,11 @@
         local other_lim = 10
         repeat
           other_lim = other_lim + 1
+          print(\"other_lim: \" .. other_lim)
         until other_lim == 10
         local binopped = 25 + 32 * 42
         local unopped = -42
-        function varfunc(a, ...)
+        local function varfunc(a, ...)
           return ...
         end
         if true then
