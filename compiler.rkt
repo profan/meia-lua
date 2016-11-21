@@ -147,15 +147,27 @@
 
 (define-syntax-class cst/expr
   (pattern
-   (~or
-    {~datum "nil"}
-    {~datum "false"}
-    {~datum "true"}
-    {~datum "..."}
-    cst/function
-    cst/prefixexp
-    (lhs:cst/expr op:cst/binop rhs:cst/expr)
-    (op:cst/unop e:cst/expr))))
+   (~and m
+         (~or
+          {~datum "nil"}
+          {~datum "false"}
+          {~datum "true"}
+          {~datum "..."}
+          cst/function
+          cst/prefixexp
+          (lhs:cst/expr op:cst/binop rhs:cst/expr)
+          (op:cst/unop e:cst/expr)))
+   #:attr parse
+   (syntax-case m
+       [{~datum "nil"} 'nil]
+       [{~datum "true"} 'true]
+       [{~datum "false"} 'false]
+       [{~datum "..."} '...]
+       [fn:cst/function (attribute fn.extract)]
+       [fn:cst/prefixexp (attribute fn.extract)]
+       [(lhs:cst/expr op:cst/binop rhs:cst/expr)
+        `(binop ,(attribute op.parse) ,(attribute lhs.parse) ,(attribute lhs.parse))]
+       [(op:cst/unop e:cst/expr) `(unop ,(attribute op.parse) ,(attribute e.parse))])))
 
 (define-syntax-class cst/var
   (pattern
