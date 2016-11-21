@@ -101,14 +101,16 @@
 
 (define-syntax-class cst/functioncall
   (pattern
-   (~or
-    (cst/prefixexp cst/args)
-    (cst/prefixexp {~datum ":"} var:id cst/args))))
+   (cst/prefixexp {~datum ":"} var:id args:cst/args))
+  (pattern
+   (cst/prefixexp cst/args)))
 
 (define-syntax-class cst/args
   (pattern
+   ({~datum "("} (~optional elist:cst/explist) {~datum ")"})
+   #:with expr #'elist)
+  (pattern
    (~or
-    ({~datum "("} (~optional cst/explist) {~datum ")"})
     cst/tableconstructor
     str)))
 
@@ -122,10 +124,11 @@
 
 (define-syntax-class cst/prefixexp
   (pattern
-   (~or
-    cst/var
-    cst/functioncall
-    ({~datum "("} cst/expr {~datum ")"}))))
+   var:cst/var)
+  (pattern
+   fn:cst/functioncall)
+  (pattern
+   ({~datum "("} cst/expr {~datum ")"})))
 
 (define-syntax-class cst/tableconstructor
   (pattern
@@ -137,9 +140,9 @@
 
 (define-syntax-class cst/field
   (pattern
-   (~or
-    ({~datum "{"} lhs:cst/expr {~datum "}"} {~datum "="} rhs:cst/expr)
-    ({~literal var}))))
+   ({~datum "{"} lhs:cst/expr {~datum "}"} {~datum "="} rhs:cst/expr))
+  (pattern
+   ({~literal var})))
 
 (define-syntax-class cst/binop
   (pattern
@@ -167,7 +170,8 @@
          (~or
           {~datum "-"}
           {~datum "not"}
-          {~datum "#"}))))
+          {~datum "#"}))
+   #:with expr #'o))
 
 (define-syntax-class cst/expr
   (pattern
