@@ -147,8 +147,6 @@
 (define-syntax-class cst/unop
   (pattern thing))
 
-(require (for-syntax syntax/parse))
-
 (define-syntax-class cst/expr
   (pattern
    (~and s
@@ -163,16 +161,19 @@
   (pattern
    cst/prefixexp)
   (pattern
-   (lhs:cst/expr op:cst/binop rhs:cst/expr))
+   (lhs:cst/expr op:cst/binop rhs:cst/expr)
+   #:with expr #'(binop op.expr lhs.expr rhs.expr))
   (pattern
-   (op:cst/unop e:cst/expr)))
+   (op:cst/unop e:cst/expr)
+   #:with expr #'(unop op.expr e.expr)))
 
 (define-syntax-class cst/var
   (pattern
-   (~or
-    var:id
-    (pe:cst/prefixexp {~datum "{"} e:cst/expr {~datum "}"})
-    (pe:cst/prefixexp {~datum "."} var:id))))
+   var:id)
+  (pattern
+   (pe:cst/prefixexp {~datum "{"} e:cst/expr {~datum "}"}))
+  (pattern
+   (pe:cst/prefixexp {~datum "."} var:id)))
 
 (define-syntax-class cst/funcname
   (pattern
