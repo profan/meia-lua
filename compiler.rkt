@@ -164,7 +164,8 @@
    cst/prefixexp)
   (pattern
    (lhs:cst/expr op:cst/binop rhs:cst/expr))
-  (pattern op:cst/unop e:cst/expr))
+  (pattern
+   (op:cst/unop e:cst/expr)))
 
 (define-syntax-class cst/var
   (pattern
