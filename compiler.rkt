@@ -207,9 +207,11 @@
 
 (define-syntax-class cst/laststat
   (pattern
-   (~or
-    ({~datum "return"} (~optional cst/explist))
-    {~datum "break"})))
+   ({~datum "return"} (~optional es:cst/explist))
+   #:with expr #'(return es.expr))
+  (pattern
+   {~datum "break"}
+   #:with expr #'(break)))
 
 (define-syntax-class cst/chunk
   (pattern
@@ -436,6 +438,7 @@
         (for (n* ... n) e s)
         (begin c s* ...)
         (ret e* ...)
+        (break)
         e)
   (Expr (e)
         x ;; variable
@@ -555,7 +558,9 @@
            (define stmts (format "~a" (format-list '() s* #:sep "\n")))
            (if c (format "do ~n ~a ~nend" stmts) stmts))]
         [(ret ,e* ...)
-         (format "return ~a" (format-list '() e* #:sep ", "))]))
+         (format "return ~a" (format-list '() e* #:sep ", "))]
+        [(break)
+         (format "break")]))
 
 ;; MANUAL AST FOR TESTING OK FUC
 (parse-L1 'x)
