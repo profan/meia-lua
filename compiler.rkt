@@ -138,7 +138,7 @@
 (define-syntax-class cst/field
   (pattern
    (~or
-    ({~datum "{"} cst/expr {~datum "}"} {~datum "="} cst/expr)
+    ({~datum "{"} lhs:cst/expr {~datum "}"} {~datum "="} rhs:cst/expr)
     ({~literal var}))))
 
 (define-syntax-class cst/binop)
@@ -154,8 +154,8 @@
     {~datum "..."}
     cst/function
     cst/prefixexp
-    (cst/expr cst/binop cst/expr)
-    (cst/unop cst/expr))))
+    (lhs:cst/expr op:cst/binop rhs:cst/expr)
+    (op:cst/unop e:cst/expr))))
 
 (define-syntax-class cst/var
   (pattern
@@ -166,7 +166,7 @@
 
 (define-syntax-class cst/funcname
   (pattern
-   (var:id (~seq {~datum "."} v:id) (~optional ({~datum ":"} v:id)))))
+   (var:id (~seq {~datum "."} vs:id) (~optional ({~datum ":"} v:id)))))
 
 (define-syntax-class cst/laststat
   (pattern
@@ -181,10 +181,10 @@
     ({~datum "do"} cst/block {~datum "end"})
     ({~datum "while"} cst/expr {~datum "do"} cst/block {~datum "end"})
     ({~datum "repeat"} cst/block {~datum "until"} cst/expr)
-    ({~datum "if"} cst/expr {~datum "then"} cst/block
-     (~seq {~datum "elseif"} cst/expr {~datum "then"} cst/block)
-     (~optional {~datum "else"} cst/block)
-     {~datum "end"})))
+    ({~datum "if"} ife:cst/expr {~datum "then"} ifb:cst/block
+     (~seq {~datum "elseif"} elseife:cst/expr {~datum "then"} elseifb:cst/block)
+     (~optional ({~datum "else"} elseb:cst/block))
+     {~datum "end"}))))
 
 (define (cst->ast cst)
   (with-output-language (L1 Stmt)
