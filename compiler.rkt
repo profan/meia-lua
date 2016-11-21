@@ -141,33 +141,30 @@
     ({~datum "{"} lhs:cst/expr {~datum "}"} {~datum "="} rhs:cst/expr)
     ({~literal var}))))
 
-(define-syntax-class cst/binop)
+(define-syntax-class cst/binop
+  (pattern thing))
 
-(define-syntax-class cst/unop)
+(define-syntax-class cst/unop
+  (pattern thing))
+
+(require (for-syntax syntax/parse))
 
 (define-syntax-class cst/expr
   (pattern
-   (~and m
+   (~and s
          (~or
           {~datum "nil"}
           {~datum "false"}
           {~datum "true"}
-          {~datum "..."}
-          cst/function
-          cst/prefixexp
-          (lhs:cst/expr op:cst/binop rhs:cst/expr)
-          (op:cst/unop e:cst/expr)))
-   #:attr parse
-   (syntax-case m
-       [{~datum "nil"} 'nil]
-       [{~datum "true"} 'true]
-       [{~datum "false"} 'false]
-       [{~datum "..."} '...]
-       [fn:cst/function (attribute fn.extract)]
-       [fn:cst/prefixexp (attribute fn.extract)]
-       [(lhs:cst/expr op:cst/binop rhs:cst/expr)
-        `(binop ,(attribute op.parse) ,(attribute lhs.parse) ,(attribute lhs.parse))]
-       [(op:cst/unop e:cst/expr) `(unop ,(attribute op.parse) ,(attribute e.parse))])))
+          {~datum "..."}))
+   #:with expr (string->symbol (syntax->datum #'s)))
+  (pattern
+   cst/function)
+  (pattern
+   cst/prefixexp)
+  (pattern
+   (lhs:cst/expr op:cst/binop rhs:cst/expr))
+  (pattern op:cst/unop e:cst/expr))
 
 (define-syntax-class cst/var
   (pattern
