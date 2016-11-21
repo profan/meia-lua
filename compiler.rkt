@@ -174,9 +174,12 @@
     ({~datum "return"} (~optional cst/explist))
     {~datum "break"})))
 
-(define-syntax-class cst/block
+(define-syntax-class cst/chunk
   (pattern
-   (stmts:cst/stat ...)))
+   ((~or cst/stat {~datum ";"}) ...)))
+
+(define-syntax-class cst/block
+  (pattern cst/chunk))
 
 (define-syntax-class cst/stat
   (pattern
