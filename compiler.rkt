@@ -142,10 +142,32 @@
     ({~literal var}))))
 
 (define-syntax-class cst/binop
-  (pattern thing))
+  (pattern
+   (~and o
+         (~or
+          {~datum "+"}
+          {~datum "-"}
+          {~datum "*"}
+          {~datum "/"}
+          {~datum "%"}
+          {~datum ".."}
+          {~datum "<"}
+          {~datum "<="}
+          {~datum ">"}
+          {~datum ">="}
+          {~datum "=="}
+          {~datum "~="}
+          {~datum "and"}
+          {~datum "or"}))
+   #:with expr #'o))
 
 (define-syntax-class cst/unop
-  (pattern thing))
+  (pattern
+   (~and o
+         (~or
+          {~datum "-"}
+          {~datum "not"}
+          {~datum "#"}))))
 
 (define-syntax-class cst/expr
   (pattern
