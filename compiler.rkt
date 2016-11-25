@@ -89,11 +89,19 @@
 
 
 (define-splicing-syntax-class cst/varlist
-  (pattern ({~literal varlist} (~seq v:id ...))))
+  (pattern ({~literal varlist} (~seq vs:id ...))
+           #:with expr
+           (for/list ([id (syntax->list #'(vs ...))]
+                      #:when (not (eqv? (syntax->datum id) ",")))
+             (string->symbol (syntax->datum id)))))
 
 (define-splicing-syntax-class cst/namelist
   (pattern
-   ({~literal namelist} (~seq n:id ...))))
+   ({~literal namelist} (~seq ns:id ...))
+   #:with expr
+   (for/list ([name (syntax->list #'(ns ...))]
+              #:when (not (eqv? (syntax->datum name ","))))
+     (string->symbol (syntax->datum name)))))
 
 (define-syntax-class cst/explist
   (pattern
@@ -222,13 +230,13 @@
 (define-syntax-class cst/stat
   (pattern
    ({~datum "repeat"} blk:cst/block {~datum "until"} cnd:cst/expr)
-   #:with expr #'(repeat blk cnd))
+   #:with expr #'(repeat blk.expr cnd.expr))
   (pattern
    ({~datum "do"} blk:cst/block {~datum "end"})
-   #:with expr #'(begin #t (blk)))
+   #:with expr #'(begin #t (blk.expr)))
   (pattern
    ({~datum "while"} cnd:cst/expr {~datum "do"} blk:cst/block {~datum "end"})
-   #:while expr #'(while cnd blk))
+   #:with expr #'(while cnd.expr blk.expr))
   (pattern
    (~or
     cst/functioncall
