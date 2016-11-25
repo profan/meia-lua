@@ -221,11 +221,17 @@
 
 (define-syntax-class cst/stat
   (pattern
+   ({~datum "repeat"} blk:cst/block {~datum "until"} cnd:cst/expr)
+   #:with expr #'(repeat blk cnd))
+  (pattern
+   ({~datum "do"} blk:cst/block {~datum "end"})
+   #:with expr #'(begin #t (blk)))
+  (pattern
+   ({~datum "while"} cnd:cst/expr {~datum "do"} blk:cst/block {~datum "end"})
+   #:while expr #'(while cnd blk))
+  (pattern
    (~or
     cst/functioncall
-    ({~datum "do"} cst/block {~datum "end"})
-    ({~datum "while"} cst/expr {~datum "do"} cst/block {~datum "end"})
-    ({~datum "repeat"} cst/block {~datum "until"} cst/expr)
     ({~datum "if"} ife:cst/expr {~datum "then"} ifb:cst/block
      (~seq ({~datum "elseif"} eifes:cst/expr {~datum "then"} eifbs:cst/block))
      (~optional ({~datum "else"} elseb:cst/block))
