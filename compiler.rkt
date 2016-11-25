@@ -146,32 +146,28 @@
 
 (define-syntax-class cst/binop
   (pattern
-   (~and o
-         (~or
-          {~datum "+"}
-          {~datum "-"}
-          {~datum "*"}
-          {~datum "/"}
-          {~datum "%"}
-          {~datum ".."}
-          {~datum "<"}
-          {~datum "<="}
-          {~datum ">"}
-          {~datum ">="}
-          {~datum "=="}
-          {~datum "~="}
-          {~datum "and"}
-          {~datum "or"}))
-   #:with expr #'o))
+   (~or
+    {~datum "+"}
+    {~datum "-"}
+    {~datum "*"}
+    {~datum "/"}
+    {~datum "%"}
+    {~datum ".."}
+    {~datum "<"}
+    {~datum "<="}
+    {~datum ">"}
+    {~datum ">="}
+    {~datum "=="}
+    {~datum "~="}
+    {~datum "and"}
+    {~datum "or"})))
 
 (define-syntax-class cst/unop
   (pattern
-   (~and o
-         (~or
-          {~datum "-"}
-          {~datum "not"}
-          {~datum "#"}))
-   #:with expr #'o))
+   (~or
+    {~datum "-"}
+    {~datum "not"}
+    {~datum "#"})))
 
 (define-syntax-class cst/expr
   (pattern
@@ -216,7 +212,9 @@
 (define-syntax-class cst/chunk
   (pattern
    (~and stmts ((~or cst/stat {~datum ";"}) ...))
-   #:with expr (for/list ([s (syntax->list #'stmts)] #:when (not (eqv? s ";"))) s)))
+   #:with expr
+   (for/list ([s (syntax->list #'stmts)]
+              #:when (not (eqv? (syntax->datum s) ";"))) s)))
 
 (define-syntax-class cst/block
   (pattern cst/chunk))
