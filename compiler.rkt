@@ -87,7 +87,6 @@
 
 ;; CST to AST transformer here
 
-
 (define-splicing-syntax-class cst/varlist
   (pattern ({~literal varlist} (~seq vs:id ...))
            #:with expr
@@ -105,7 +104,11 @@
 
 (define-syntax-class cst/explist
   (pattern
-   ((cst/expr (~optional {~datum ","})) ...)))
+   (~and es ((cst/expr (~optional {~datum ","})) ...))
+   #:with expr
+   (for/list ([e (syntax->list #'es)]
+              #:when (not (eqv? (syntax->datum e ","))))
+     e)))
 
 (define-syntax-class cst/functioncall
   (pattern
