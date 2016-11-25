@@ -215,7 +215,8 @@
 
 (define-syntax-class cst/chunk
   (pattern
-   ((~or cst/stat {~datum ";"}) ...)))
+   (~and stmts ((~or cst/stat {~datum ";"}) ...))
+   #:with expr (for/list ([s (syntax->list #'stmts)] #:when (not (eqv? s ";"))) s)))
 
 (define-syntax-class cst/block
   (pattern cst/chunk))
@@ -228,7 +229,7 @@
     ({~datum "while"} cst/expr {~datum "do"} cst/block {~datum "end"})
     ({~datum "repeat"} cst/block {~datum "until"} cst/expr)
     ({~datum "if"} ife:cst/expr {~datum "then"} ifb:cst/block
-     (~seq {~datum "elseif"} elseife:cst/expr {~datum "then"} elseifb:cst/block)
+     (~seq ({~datum "elseif"} eifes:cst/expr {~datum "then"} eifbs:cst/block))
      (~optional ({~datum "else"} elseb:cst/block))
      {~datum "end"}))))
 
