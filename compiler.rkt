@@ -151,7 +151,7 @@
 
 (define-syntax-class cst/fieldlist
   (pattern
-   ({~datum "{"} cst/field {~datum "}"})))
+   ({~datum "{"} (~seq (~or cst/field {~datum ","})) {~datum "}"})))
 
 (define-syntax-class cst/field
   (pattern
