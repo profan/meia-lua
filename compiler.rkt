@@ -118,7 +118,11 @@
 
 (define-syntax-class cst/args
   (pattern
-   ({~datum "("} (~optional elist:cst/explist) {~datum ")"})
+   ({~datum "("}
+    (~optional
+     elist:cst/explist
+     #:defaults ([elist #'()]))
+    {~datum ")"})
    #:with expr #'elist)
   (pattern
    (~or
@@ -131,7 +135,7 @@
 
 (define-syntax-class cst/funcbody
   (pattern
-   ({~datum "("} (~optional cst/parlist) {~datum ")"} cst/block {~datum "end"})))
+   ({~datum "("} (~optional args:cst/parlist) {~datum ")"} blk:cst/block {~datum "end"})))
 
 (define-syntax-class cst/prefixexp
   (pattern
