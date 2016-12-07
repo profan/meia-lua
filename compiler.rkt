@@ -236,9 +236,10 @@
 
 (define-syntax-class cst/chunk
   (pattern
-   (~and stmts ((~or cst/stat {~datum ";"}) ...))
+   ({~literal chunk}
+    (~and stmts ((~or cst/stat {~datum ";"}) ...)))
    #:with expr
-   (for/list ([s (syntax->list #'stmts)]
+   (for/list ([s (syntax-e #'stmts)]
               #:when (not (eqv? (syntax->datum s) ";"))) s)))
 
 (define-syntax-class cst/block
@@ -261,6 +262,11 @@
      (~seq ({~datum "elseif"} eifes:cst/expr {~datum "then"} eifbs:cst/block))
      (~optional ({~datum "else"} elseb:cst/block))
      {~datum "end"}))))
+
+(define (new-cst->ast cst)
+  (with-output-language (L1 Stmt)
+    (syntax-parse cst
+      [program:cst/chunk (syntax->datum #'program)])))
 
 (define (cst->ast cst)
   (with-output-language (L1 Stmt)
@@ -689,8 +695,8 @@
 
 (pretty-print (syntax->datum test-syntax))
 (pretty-print (parse-L1 '(assign #t (x y) (10 24))))
-(pretty-print (car (cst->ast test-syntax)))
+(pretty-print (car (new-cst->ast test-syntax)))
 (displayln
  (generate-code
   (lower-op-assign
-   (car (cst->ast test-syntax)))))
+   (car (new-cst->ast test-syntax)))))
