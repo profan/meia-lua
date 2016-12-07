@@ -247,6 +247,9 @@
 
 (define-syntax-class cst/stat
   (pattern
+   (vs:cst/varlist {~datum "="} es:cst/explist)
+   #:with expr #'(assign vs.expr es.expr))
+  (pattern
    ({~datum "repeat"} blk:cst/block {~datum "until"} cnd:cst/expr)
    #:with expr #'(repeat blk.expr cnd.expr))
   (pattern
