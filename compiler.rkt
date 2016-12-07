@@ -137,6 +137,12 @@
   (pattern
    ({~datum "("} (~optional args:cst/parlist) {~datum ")"} blk:cst/block {~datum "end"})))
 
+(define-syntax-class cst/parlist
+  (pattern
+   (ns:cst/namelist (~optional ({~datum ","} {~datum "..."}))))
+  (pattern
+   {~datum "..."}))
+
 (define-syntax-class cst/prefixexp
   (pattern
    var:cst/var)
