@@ -274,8 +274,9 @@
 
 (define (new-cst->ast cst)
   (with-output-language (L1 Stmt)
-    (syntax-parse cst
-      [program:cst/chunk (syntax->datum #'(program.expr))])))
+    (syntax->datum
+     (syntax-parse cst
+       [program:cst/chunk #'(program.expr)]))))
 
 (define (cst->ast cst)
   (with-output-language (L1 Stmt)
