@@ -247,8 +247,14 @@
 
 (define-syntax-class cst/stat
   (pattern
-   (vs:cst/varlist {~datum "="} es:cst/explist)
-   #:with expr #'(assign vs.expr es.expr))
+   ({~literal stat}
+    {~datum "local"}
+    ns:cst/namelist {~datum "="} es:cst/explist)
+   #:with expr #'(assign #t ns.expr es.expr))
+  (pattern
+   ({~literal stat}
+    vs:cst/varlist {~datum "="} es:cst/explist)
+   #:with expr #'(assign #f vs.expr es.expr))
   (pattern
    ({~datum "repeat"} blk:cst/block {~datum "until"} cnd:cst/expr)
    #:with expr #'(repeat blk.expr cnd.expr))
@@ -696,10 +702,15 @@
         end
       end"))))
 
-(pretty-print (syntax->datum test-syntax))
+(define new-test-syntax
+  (parse
+   (tokenize
+    (open-input-string "local x, y, z = 12, 24, 32"))))
+
+(pretty-print (syntax->datum new-test-syntax))
 (pretty-print (parse-L1 '(assign #t (x y) (10 24))))
-(pretty-print (car (new-cst->ast test-syntax)))
+(pretty-print (car (new-cst->ast new-test-syntax)))
 (displayln
  (generate-code
   (lower-op-assign
-   (car (new-cst->ast test-syntax)))))
+   (car (new-cst->ast new-test-syntax)))))
