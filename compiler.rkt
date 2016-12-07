@@ -157,6 +157,8 @@
   (pattern
    ({~datum "{"} lhs:cst/expr {~datum "}"} {~datum "="} rhs:cst/expr))
   (pattern
+   (lhs:id {~datum "="} rhs:cst/expr))
+  (pattern
    ({~literal var})))
 
 (define-syntax-class cst/binop
