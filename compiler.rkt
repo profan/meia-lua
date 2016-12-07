@@ -210,10 +210,11 @@
   (pattern
    var:id)
   (pattern
-   (pe:cst/prefixexp {~datum "{"} e:cst/expr {~datum "}"}))
+   (pe:cst/prefixexp {~datum "{"} e:cst/expr {~datum "}"})
+   #:with expr #'(table e.expr))
   (pattern
-   (pe:cst/prefixexp {~datum "."} v:id
-                     #:with expr #'(access pe.expr v))))
+   (pe:cst/prefixexp {~datum "."} v:id)
+   #:with expr #'(access pe.expr v)))
 
 (define-syntax-class cst/funcname
   (pattern
