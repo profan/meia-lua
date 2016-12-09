@@ -234,13 +234,23 @@
    {~datum "break"}
    #:with expr #'(break)))
 
+(define (is-comma s)
+  (syntax-parse s
+    [{~datum ","} #t]
+    [e #f]))
+
+(define (extract-comma s)
+  (syntax-parse s
+    [stmt:cst/stat (attribute stmt.expr)]))
+
 (define-syntax-class cst/chunk
   (pattern
    ({~literal chunk}
     (~and stmts ((~or cst/stat {~datum ";"}) ...)))
    #:with expr
    (for/list ([s (syntax-e #'stmts)]
-              #:when (not (eqv? (syntax->datum s) ";"))) s)))
+              #:when (not (is-comma s)))
+     (extract-comma s))))
 
 (define-syntax-class cst/block
   (pattern cst/chunk))
@@ -270,10 +280,12 @@
     ({~datum "if"} ife:cst/expr {~datum "then"} ifb:cst/block
      (~seq ({~datum "elseif"} eifes:cst/expr {~datum "then"} eifbs:cst/block))
      (~optional ({~datum "else"} elseb:cst/block))
-     {~datum "end"}))))
+     {~datum "end"}))
+   #:with expr #'nil))
 
 (define (new-cst->ast cst)
   (with-output-language (L1 Stmt)
+    (displayln (format "cst: ~a" cst))
     (syntax->datum
      (syntax-parse cst
        [program:cst/chunk #'(program.expr)]))))
