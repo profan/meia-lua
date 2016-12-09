@@ -87,6 +87,12 @@
 
 ;; CST to AST transformer here
 
+;; helper functions
+(define (is-comma s)
+  (syntax-parse s
+    [{~datum ","} #t]
+    [e #f]))
+
 (define-splicing-syntax-class cst/varlist
   (pattern ({~literal varlist} (~seq vs:id ...))
            #:with expr
@@ -102,13 +108,17 @@
               #:when (not (eqv? (syntax->datum name ","))))
      (string->symbol (syntax->datum name)))))
 
+(define (extract-expr expr)
+  (syntax-parse expr
+    [e:cst/expr (attribute e.expr)]))
+
 (define-syntax-class cst/explist
   (pattern
    (~and es ((cst/expr (~optional {~datum ","})) ...))
    #:with expr
-   (for/list ([e (syntax->list #'es)]
-              #:when (not (eqv? (syntax->datum e ","))))
-     e)))
+   (for/list ([e (syntax-e #'es)]
+              #:when (not (is-comma e)))
+     (extract-expr e))))
 
 (define-syntax-class cst/functioncall
   (pattern
@@ -202,6 +212,9 @@
           {~datum "..."}))
    #:with expr (string->symbol (syntax->datum #'s)))
   (pattern
+   (exp n:number)
+   #:with expr #'n)
+  (pattern
    cst/function)
   (pattern
    cst/prefixexp)
@@ -234,12 +247,7 @@
    {~datum "break"}
    #:with expr #'(break)))
 
-(define (is-comma s)
-  (syntax-parse s
-    [{~datum ","} #t]
-    [e #f]))
-
-(define (extract-comma s)
+(define (extract-stmt s)
   (syntax-parse s
     [stmt:cst/stat (attribute stmt.expr)]))
 
@@ -250,7 +258,7 @@
    #:with expr
    (for/list ([s (syntax-e #'stmts)]
               #:when (not (is-comma s)))
-     (extract-comma s))))
+     (extract-stmt s))))
 
 (define-syntax-class cst/block
   (pattern cst/chunk))
