@@ -109,12 +109,13 @@
      (string->symbol (syntax->datum name)))))
 
 (define (extract-expr expr)
+  (displayln expr)
   (syntax-parse expr
-    [e:cst/expr (attribute e)]))
+    [e:cst/expr (attribute e.expr)]))
 
 (define-syntax-class cst/explist
   (pattern
-   (es ...)
+   ({~literal explist} es ...)
    #:with expr
    (for/list ([e (syntax-e #'(es ...))]
               #:when (not (is-comma e)))
@@ -215,9 +216,11 @@
    (exp n:number)
    #:with expr #'n)
   (pattern
-   cst/function)
+   fn:cst/function
+   #:with expr #'(fn.expr))
   (pattern
-   cst/prefixexp)
+   pe:cst/prefixexp
+   #:with expr #'(pe))
   (pattern
    (lhs:cst/expr op:cst/binop rhs:cst/expr)
    #:with expr #'(binop op.expr lhs.expr rhs.expr))
