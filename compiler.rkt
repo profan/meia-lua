@@ -102,21 +102,21 @@
 
 (define-splicing-syntax-class cst/namelist
   (pattern
-   ({~literal namelist} (~seq ns:id ...))
+   ({~literal namelist} ns ...)
    #:with expr
    (for/list ([name (syntax->list #'(ns ...))]
-              #:when (not (eqv? (syntax->datum name ","))))
+              #:when (not (is-comma name)))
      (string->symbol (syntax->datum name)))))
 
 (define (extract-expr expr)
   (syntax-parse expr
-    [e:cst/expr (attribute e.expr)]))
+    [e:cst/expr (attribute e)]))
 
 (define-syntax-class cst/explist
   (pattern
-   (~and es ((cst/expr (~optional {~datum ","})) ...))
+   (es ...)
    #:with expr
-   (for/list ([e (syntax-e #'es)]
+   (for/list ([e (syntax-e #'(es ...))]
               #:when (not (is-comma e)))
      (extract-expr e))))
 
@@ -253,10 +253,9 @@
 
 (define-syntax-class cst/chunk
   (pattern
-   ({~literal chunk}
-    (~and stmts ((~or cst/stat {~datum ";"}) ...)))
+   ({~literal chunk} stmts ...)
    #:with expr
-   (for/list ([s (syntax-e #'stmts)]
+   (for/list ([s (syntax->list #'(stmts ...))]
               #:when (not (is-comma s)))
      (extract-stmt s))))
 
