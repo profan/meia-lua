@@ -562,10 +562,17 @@
    (tokenize
     (open-input-string "local x, y, z = 12, 24, 32"))))
 
-(pretty-print (syntax->datum new-test-syntax))
-(pretty-print (parse-L1 '(assign #t (x y) (10 24))))
-(pretty-print (car (new-cst->ast new-test-syntax)))
+(define (pretty-test name thunky)
+  (displayln name)
+  (pretty-print (thunky))
+  (displayln ""))
+
+(pretty-test "TEST 1 ->" (lambda () (syntax->datum new-test-syntax)))
+(pretty-test "TEST 2 ->" (lambda () (parse-L1 '(assign #t (x y) (10 24)))))
+(pretty-test "TEST 3 ->" (lambda () (car (new-cst->ast new-test-syntax))))
+(pretty-test "TEST 4 ->" (lambda () (parse-L1 (car (car (new-cst->ast new-test-syntax))))))
+
 (displayln
  (generate-code
   (lower-op-assign
-   (car (new-cst->ast new-test-syntax)))))
+   (parse-L1 (car (car (new-cst->ast new-test-syntax)))))))
