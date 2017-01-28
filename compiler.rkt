@@ -197,7 +197,7 @@
            {~datum "~="}
            {~datum "and"}
            {~datum "or"})))
-   #:with expr (syntax->datum #'op)))
+   #:with expr #'op))
 
 (define-syntax-class cst/unop
   (pattern
