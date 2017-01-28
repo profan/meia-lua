@@ -180,21 +180,24 @@
 
 (define-syntax-class cst/binop
   (pattern
-   (~or
-    {~datum "+"}
-    {~datum "-"}
-    {~datum "*"}
-    {~datum "/"}
-    {~datum "%"}
-    {~datum ".."}
-    {~datum "<"}
-    {~datum "<="}
-    {~datum ">"}
-    {~datum ">="}
-    {~datum "=="}
-    {~datum "~="}
-    {~datum "and"}
-    {~datum "or"})))
+   ({~literal binop}
+    (~and op
+          (~or
+           {~datum "+"}
+           {~datum "-"}
+           {~datum "*"}
+           {~datum "/"}
+           {~datum "%"}
+           {~datum ".."}
+           {~datum "<"}
+           {~datum "<="}
+           {~datum ">"}
+           {~datum ">="}
+           {~datum "=="}
+           {~datum "~="}
+           {~datum "and"}
+           {~datum "or"})))
+   #:with expr (syntax->datum #'op)))
 
 (define-syntax-class cst/unop
   (pattern
@@ -219,13 +222,13 @@
    fn:cst/function
    #:with expr #'(fn.expr))
   (pattern
-   pe:cst/prefixexp
-   #:with expr #'(pe))
-  (pattern
-   (lhs:cst/expr op:cst/binop rhs:cst/expr)
+   (exp lhs:cst/expr op:cst/binop rhs:cst/expr)
    #:with expr #'(binop op.expr lhs.expr rhs.expr))
   (pattern
-   (op:cst/unop e:cst/expr)
+   pe:cst/prefixexp
+   #:with expr #'pe)
+  (pattern
+   (exp op:cst/unop e:cst/expr)
    #:with expr #'(unop op.expr e.expr)))
 
 (define-syntax-class cst/var
@@ -294,11 +297,10 @@
    #:with expr #'nil))
 
 (define (new-cst->ast cst)
-  (with-output-language (L1 Stmt)
-    (displayln (format "cst: ~a" cst))
-    (syntax->datum
-     (syntax-parse cst
-       [program:cst/chunk #'(program.expr)]))))
+  `(begin #f
+          ,(syntax->datum
+            (syntax-parse cst
+              [program:cst/chunk #'program.expr]))))
 
 ;; AST parsing follows
 
@@ -336,7 +338,7 @@
         (repeat s e)
         (if e s s?)
         (for (n* ... n) e s)
-        (begin c s* ...)
+        (begin c (s* ...))
         (ret e* ...)
         (break)
         e)
@@ -405,7 +407,7 @@
       (define l
         (cond
           [(empty? e) e*]
-          [else (cons e e*)]))
+          [else (append e* (list e))]))
       (string-join
        (map (λ (n)
               (cond
@@ -453,7 +455,7 @@
          (format "repeat ~n ~a ~nuntil ~a" (Stmt s) (Expr e))]
         [(for (,n* ... ,n) ,e ,s)
          (format "for ~a in ~a do ~n ~a ~nend" (format-list n n* #:sep ", ") (Expr e) (Stmt s))]
-        [(begin ,c ,s* ...)
+        [(begin ,c (,s* ...))
          (begin
            (define stmts (format "~a" (format-list '() s* #:sep "\n")))
            (if c (format "do ~n ~a ~nend" stmts) stmts))]
@@ -473,30 +475,30 @@
 (lower-op-assign (parse-L1 '(op-assign #t "+" (x y) (24 (binop "-" 35 25)))))
 (lower-op-assign (parse-L1 '(fn () (ret (32)))))
 (displayln
- (generate-code (lower-op-assign (parse-L1 '(fn (a b c) (begin #f (ret (32))))))))
+ (generate-code (lower-op-assign (parse-L1 '(fn (a b c) (begin #f ((ret (32)))))))))
 
 ;; codegen testing
 (displayln
  (generate-code
   (lower-op-assign
    (parse-L1 '(begin #t
-                (assign #t (x) (0))
-                (while true (op-assign #f "+" (x) ((binop "*" 5 2)))))))))
+                     ((assign #t (x) (0))
+                      (while true (op-assign #f "+" (x) ((binop "*" 5 2))))))))))
 
 (displayln
  (generate-code
   (lower-op-assign
    (parse-L1 '(begin #t
-                (assign #t (x y) (0 0))
-                (while true (op-assign #f "+" (x y) ((binop "*" 32 16) 48)))
-                (ret (32 24)))))))
+                     ((assign #t (x y) (0 0))
+                      (while true (op-assign #f "+" (x y) ((binop "*" 32 16) 48)))
+                      (ret (32 24))))))))
 
 (displayln
  (generate-code
   (lower-op-assign
    (parse-L1 '(begin #f
-                (assign #t (t1 t2 t3) ((table (1 2 3 4)) (table (5 6 7 8)) (table)))
-                (ret (t1 t2 t3)))))))
+                     ((assign #t (t1 t2 t3) ((table (1 2 3 4)) (table (5 6 7 8)) (table)))
+                      (ret (t1 t2 t3))))))))
 
 (displayln
  (generate-code
@@ -560,7 +562,12 @@
 (define new-test-syntax
   (parse
    (tokenize
-    (open-input-string "local x, y, z = 12, 24, 32"))))
+    (open-input-string
+     "local x, y, z = 12, 24, 32
+      local foo, bar = 10 + 24, 24 + 48
+      function does_things(a, b, c)
+        return a, b, c
+      end"))))
 
 (define (pretty-test name thunky)
   (displayln name)
@@ -569,10 +576,16 @@
 
 (pretty-test "TEST 1 ->" (lambda () (syntax->datum new-test-syntax)))
 (pretty-test "TEST 2 ->" (lambda () (parse-L1 '(assign #t (x y) (10 24)))))
-(pretty-test "TEST 3 ->" (lambda () (car (new-cst->ast new-test-syntax))))
-(pretty-test "TEST 4 ->" (lambda () (parse-L1 (car (car (new-cst->ast new-test-syntax))))))
+(pretty-test "TEST 3 ->" (lambda () (new-cst->ast new-test-syntax)))
+(pretty-test "TEST 4 ->" (lambda () (parse-L1 (new-cst->ast new-test-syntax))))
+
+(displayln "TEST 5 ->")
+(pretty-print (syntax->datum new-test-syntax))
+(pretty-print
+ (lower-op-assign
+  (parse-L1 (new-cst->ast new-test-syntax))))
 
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 (car (car (new-cst->ast new-test-syntax)))))))
+   (parse-L1 (new-cst->ast new-test-syntax)))))
