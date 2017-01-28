@@ -146,7 +146,8 @@
 
 (define-syntax-class cst/funcbody
   (pattern
-   ({~datum "("} (~optional args:cst/parlist) {~datum ")"} blk:cst/block {~datum "end"})))
+   ({~literal funcbody}
+    {~datum "("} (~optional args:cst/parlist) {~datum ")"} blk:cst/block {~datum "end"})))
 
 (define-syntax-class cst/parlist
   (pattern
@@ -243,7 +244,7 @@
 
 (define-syntax-class cst/funcname
   (pattern
-   (var:id (~seq {~datum "."} vs:id) (~optional ({~datum ":"} v:id)))))
+   ({~literal funcname} var:id (~seq {~datum "."} vs:id) (~optional ({~datum ":"} v:id)))))
 
 (define-syntax-class cst/laststat
   (pattern
@@ -287,6 +288,12 @@
   (pattern
    ({~datum "while"} cnd:cst/expr {~datum "do"} blk:cst/block {~datum "end"})
    #:with expr #'(while cnd.expr blk.expr))
+  (pattern
+   ({~literal stat}
+    {~datum "function"}
+    fname:cst/funcname
+    fnbody:cst/funcbody)
+   #:with expr #'(assign #f (fn fname.expr fnbody.expr)))
   (pattern
    (~or
     cst/functioncall
