@@ -88,15 +88,6 @@
 ;; CST to AST transformer here
 
 ;; helper functions
-(define (is-comma s)
-  (syntax-parse s
-    [{~datum ","} #t]
-    [e #f]))
-
-(define (is-semicolon s)
-  (syntax-parse s
-    [{~datum ";"} #t]
-    [e #f]))
 
 (define-splicing-syntax-class cst/varlist
   (pattern
@@ -108,10 +99,9 @@
 
 (define-splicing-syntax-class cst/namelist
   (pattern
-   ({~literal namelist} ns ...)
+   ({~literal namelist} (~or {~datum ","} ns) ...)
    #:with expr
-   (for/list ([name (syntax->list #'(ns ...))]
-              #:when (not (is-comma name)))
+   (for/list ([name (syntax->list #'(ns ...))])
      (string->symbol (syntax->datum name)))))
 
 (define (extract-expr expr)
@@ -121,10 +111,9 @@
 
 (define-syntax-class cst/explist
   (pattern
-   ({~literal explist} es ...)
+   ({~literal explist} (~or {~datum ","} es) ...)
    #:with expr
-   (for/list ([e (syntax-e #'(es ...))]
-              #:when (not (is-comma e)))
+   (for/list ([e (syntax-e #'(es ...))])
      (extract-expr e))))
 
 (define-syntax-class cst/functioncall
@@ -300,8 +289,7 @@
      (laststmt:cst/laststat (~optional {~datum ";"})) #:defaults ([laststmt #'()])))
    #:with expr
    (append
-    (for/list ([s (syntax->list #'(stmts ...))]
-               #:when (not (is-semicolon s)))
+    (for/list ([s (syntax->list #'(stmts ...))])
       (extract-stmt s))
     #'()))
   (pattern
@@ -312,8 +300,7 @@
    ({~literal chunk}
     (~or stmts:cst/stat {~datum ";"}) ...)
    #:with expr
-   (for/list ([s (syntax->list #'(stmts ...))]
-              #:when (not (is-semicolon s)))
+   (for/list ([s (syntax->list #'(stmts ...))])
      (extract-stmt s))))
 
 (define-syntax-class cst/block
