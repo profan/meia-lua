@@ -123,9 +123,11 @@
 
 (define-syntax-class cst/functioncall
   (pattern
-   (cst/prefixexp {~datum ":"} var:id args:cst/args))
+   ({~literal functioncall}
+    cst/prefixexp {~datum ":"} var:id args:cst/args))
   (pattern
-   (cst/prefixexp cst/args)))
+   ({~literal functioncall}
+    cst/prefixexp cst/args)))
 
 (define-syntax-class cst/args
   (pattern
@@ -147,21 +149,28 @@
 (define-syntax-class cst/funcbody
   (pattern
    ({~literal funcbody}
-    {~datum "("} (~optional args:cst/parlist) {~datum ")"} blk:cst/block {~datum "end"})))
+    {~datum "("} (~optional args:cst/parlist) {~datum ")"} blk:cst/block {~datum "end"})
+   #:with expr #'(args.expr blk.expr)))
 
 (define-syntax-class cst/parlist
   (pattern
-   (ns:cst/namelist (~optional ({~datum ","} {~datum "..."}))))
+   ({~literal parlist}
+    ns:cst/namelist (~optional ({~datum ","} {~datum "..."})))
+   #:with expr #'ns.expr)
   (pattern
-   {~datum "..."}))
+   {~datum "..."}
+   #:with expr '...))
 
 (define-syntax-class cst/prefixexp
   (pattern
-   var:cst/var)
+   ({~literal prefixexp}
+    var:cst/var))
   (pattern
-   fn:cst/functioncall)
+   ({~literal prefixexp}
+    fn:cst/functioncall))
   (pattern
-   ({~datum "("} cst/expr {~datum ")"})))
+   ({~literal prefixexp}
+    {~datum "("} cst/expr {~datum ")"})))
 
 (define-syntax-class cst/tableconstructor
   (pattern
@@ -234,17 +243,24 @@
 
 (define-syntax-class cst/var
   (pattern
-   var:id)
+   ({~literal var}
+    v)
+   #:with expr #'v)
   (pattern
-   (pe:cst/prefixexp {~datum "{"} e:cst/expr {~datum "}"})
+   ({~literal var}
+    pe:cst/prefixexp {~datum "{"} e:cst/expr {~datum "}"})
    #:with expr #'(table e.expr))
   (pattern
-   (pe:cst/prefixexp {~datum "."} v:id)
+   ({~literal var}
+    pe:cst/prefixexp {~datum "."} v:id)
    #:with expr #'(access pe.expr v)))
 
 (define-syntax-class cst/funcname
   (pattern
-   ({~literal funcname} var:id (~seq {~datum "."} vs:id) (~optional ({~datum ":"} v:id)))))
+   ({~literal funcname}
+    var ;(~seq {~datum "."} vs) (~optional ({~datum ":"} v))
+    )
+   #:with expr #'var))
 
 (define-syntax-class cst/laststat
   (pattern
@@ -267,7 +283,9 @@
      (extract-stmt s))))
 
 (define-syntax-class cst/block
-  (pattern cst/chunk))
+  (pattern
+   ({~literal block} chk:cst/chunk)
+           #:with expr #'chk.expr))
 
 (define-syntax-class cst/stat
   (pattern
@@ -294,14 +312,15 @@
     fname:cst/funcname
     fnbody:cst/funcbody)
    #:with expr #'(assign #f (fn fname.expr fnbody.expr)))
-  (pattern
-   (~or
-    cst/functioncall
-    ({~datum "if"} ife:cst/expr {~datum "then"} ifb:cst/block
-     (~seq ({~datum "elseif"} eifes:cst/expr {~datum "then"} eifbs:cst/block))
-     (~optional ({~datum "else"} elseb:cst/block))
-     {~datum "end"}))
-   #:with expr #'nil))
+  ;(pattern
+   ;(~or
+    ;cst/functioncall
+    ;({~datum "if"} ife:cst/expr {~datum "then"} ifb:cst/block
+    ; (~seq ({~datum "elseif"} eifes:cst/expr {~datum "then"} eifbs:cst/block))
+    ; (~optional ({~datum "else"} elseb:cst/block))
+    ; {~datum "end"}))
+  ;#:with expr #'nil)
+  )
 
 (define (new-cst->ast cst)
   `(begin #f
@@ -573,6 +592,7 @@
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
       function does_things(a, b, c)
+        shoot_things()
         return a, b, c
       end"))))
 
