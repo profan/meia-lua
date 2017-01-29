@@ -26,7 +26,7 @@ funcname: VAR (DOT VAR)* [COLON VAR]
 
 varlist: var (COMMA var)*
 
-var: VAR | prefixexp LBRACKET exp RBRACKET | prefixexp PERIOD VAR
+var: VAR | prefixexp LSQUARE exp RSQUARE | prefixexp PERIOD VAR
 
 namelist: VAR (COMMA VAR)*
 
@@ -50,7 +50,7 @@ tableconstructor: LBRACKET [fieldlist] RBRACKET
 
 fieldlist: field (fieldsep field)* [fieldsep]
 
-field: LBRACKET exp RBRACKET EQ exp | VAR EQ exp | exp
+field: LSQUARE exp RSQUARE EQ exp | VAR EQ exp | exp
 
 fieldsep: COMMA | SEMICOLON
 

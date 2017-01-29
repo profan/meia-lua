@@ -105,7 +105,6 @@
      (string->symbol (syntax->datum name)))))
 
 (define (extract-expr expr)
-  (displayln expr)
   (syntax-parse expr
     [e:cst/expr (attribute e.expr)]))
 
@@ -174,19 +173,40 @@
 
 (define-syntax-class cst/tableconstructor
   (pattern
-   ({~datum "{"} (~optional cst/fieldlist) {~datum "}"})))
+   ({~literal tableconstructor}
+    {~datum "{"} (~optional fs:cst/fieldlist) {~datum "}"})
+   #:with expr #'(table fs.expr)))
+
+(define (extract-field fld)
+  (syntax-parse fld
+    [f:cst/field (attribute f.expr)]))
 
 (define-syntax-class cst/fieldlist
   (pattern
-   ({~datum "{"} (~seq (~or cst/field {~datum ","})) {~datum "}"})))
+   ({~literal fieldlist}
+    fs:cst/field ...)
+   #:with expr
+   (for/list ([f (syntax-e #'(fs ...))])
+     (extract-field f))))
 
 (define-syntax-class cst/field
   (pattern
-   ({~datum "{"} lhs:cst/expr {~datum "}"} {~datum "="} rhs:cst/expr))
+   (field
+    {~datum "["} lhs:cst/expr {~datum "]"} {~datum "="} rhs:cst/expr))
   (pattern
-   (lhs:id {~datum "="} rhs:cst/expr))
+   (field
+    lhs:id {~datum "="} rhs:cst/expr))
   (pattern
-   ({~literal var})))
+   (field
+    e:cst/expr)
+   #:with expr #'e.expr))
+
+(define-syntax-class cst/fieldsep
+  (pattern
+   ({~literal fieldsep}
+    (~or
+     {~datum ","}
+     {~datum ";"}))))
 
 (define-syntax-class cst/binop
   (pattern
@@ -242,6 +262,9 @@
    (exp pe:cst/prefixexp)
    #:with expr #'pe.expr)
   (pattern
+   (exp tc:cst/tableconstructor)
+   #:with expr #'tc.expr)
+  (pattern
    (exp op:cst/unop e:cst/expr)
    #:with expr #'(unop op.expr e.expr)))
 
@@ -252,7 +275,7 @@
    #:with expr (string->symbol (syntax->datum #'v)))
   (pattern
    ({~literal var}
-    pe:cst/prefixexp {~datum "{"} e:cst/expr {~datum "}"})
+    pe:cst/prefixexp {~datum "["} e:cst/expr {~datum "]"})
    #:with expr #'(table e.expr))
   (pattern
    ({~literal var}
@@ -623,6 +646,7 @@
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
       local unary_foo, unary_bar = -foo, -bar
+      local some_table = {12}
       local what = false
       while what do
         local a, b, c = 1, 2, 3
