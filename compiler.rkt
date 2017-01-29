@@ -173,7 +173,10 @@
   (pattern
    ({~literal tableconstructor}
     {~datum "{"} (~optional fs:cst/fieldlist) {~datum "}"})
-   #:with expr #'(table fs.expr)))
+   #:with expr
+   (if (attribute fs.expr)
+       #'(table fs.expr)
+       #'(table))))
 
 (define-syntax-class cst/fieldlist
   (pattern
@@ -638,7 +641,7 @@
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
       local unary_foo, unary_bar = -foo, -bar
-      local some_table = {12, 24, 48, {false, true}}
+      local some_table = {12, 24, 48, {}}
       local what = false
       while what do
         local a, b, c = 1, 2, 3
