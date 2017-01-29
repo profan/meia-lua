@@ -184,8 +184,8 @@
 (define-syntax-class cst/fieldlist
   (pattern
    ({~literal fieldlist}
-    (~seq (~seq fs:cst/field (~optional cst/fieldsep))))
-   #:with expr #'fs.expr))
+    (~or fs:cst/field cst/fieldsep) ...)
+   #:with expr #'(fs.expr ...)))
 
 (define-syntax-class cst/field
   (pattern
