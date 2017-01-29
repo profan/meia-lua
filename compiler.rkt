@@ -211,10 +211,13 @@
 
 (define-syntax-class cst/unop
   (pattern
-   (~or
-    {~datum "-"}
-    {~datum "not"}
-    {~datum "#"})))
+   ({~literal unop}
+    (~and op
+          (~or
+           {~datum "-"}
+           {~datum "not"}
+           {~datum "#"})))
+   #:with expr (syntax->datum #'op)))
 
 (define-syntax-class cst/expr
   (pattern
@@ -619,6 +622,7 @@
     (open-input-string
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
+      local unary_foo, unary_bar = -foo, -bar
       local what = false
       while what do
         local a, b, c = 1, 2, 3
