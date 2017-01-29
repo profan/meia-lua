@@ -235,7 +235,7 @@
    #:with expr #'n)
   (pattern
    fn:cst/function
-   #:with expr #'(fn.expr))
+   #:with expr #'fn.expr)
   (pattern
    (exp lhs:cst/expr op:cst/binop rhs:cst/expr)
    #:with expr #'(binop op.expr lhs.expr rhs.expr))
