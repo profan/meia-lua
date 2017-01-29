@@ -179,28 +179,25 @@
 
 (define (extract-field f)
   (syntax-parse f
-    [e:cst/expr (attribute e.expr)]))
+    [f:cst/field (attribute f.expr)]))
 
 (define-syntax-class cst/fieldlist
   (pattern
    ({~literal fieldlist}
-    (~and all ((~or cst/fieldsep fs:cst/field) ...)))
-   #:with expr
-   (begin
-     (displayln (syntax->datum #'all))
-     (displayln (syntax->datum #'(fs ...)))
-     (for/list ([f (syntax-e #'(fs ...))])
-      (extract-field f)))))
+    (~seq (~seq fs:cst/field (~optional cst/fieldsep))))
+   #:with expr #'fs.expr))
 
 (define-syntax-class cst/field
   (pattern
    (field
-    {~datum "["} lhs:cst/expr {~datum "]"} {~datum "="} rhs:cst/expr))
+    {~datum "["} lhs:cst/expr {~datum "]"} {~datum "="} rhs:cst/expr)
+   #:with expr #'nil)
   (pattern
    (field
-    lhs:id {~datum "="} rhs:cst/expr))
+    lhs:id {~datum "="} rhs:cst/expr)
+   #:with expr #'nil)
   (pattern
-   ({~literal field}
+   (field
     e:cst/expr)
    #:with expr #'e.expr))
 
@@ -649,7 +646,7 @@
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
       local unary_foo, unary_bar = -foo, -bar
-      local some_table = {12, 24, 32}
+      local some_table = {12, 24}
       local what = false
       while what do
         local a, b, c = 1, 2, 3
