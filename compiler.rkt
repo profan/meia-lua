@@ -431,8 +431,8 @@
          `(assign ,c (,x* ... ,x) (,e))])
   (Stmt ir))
 
-(language->s-expression Lua)
-(language->s-expression L1)
+; (language->s-expression Lua)
+; (language->s-expression L1)
 
 (define (debug-print-data str)
   (define tokens (tokenize (open-input-string str)))
@@ -629,16 +629,11 @@
   (pretty-print (thunky))
   (displayln ""))
 
-(pretty-test "TEST 1 ->" (lambda () (syntax->datum new-test-syntax)))
-(pretty-test "TEST 2 ->" (lambda () (parse-L1 '(assign #t (x y) (10 24)))))
-(pretty-test "TEST 3 ->" (lambda () (new-cst->ast new-test-syntax)))
-(pretty-test "TEST 4 ->" (lambda () (parse-L1 (new-cst->ast new-test-syntax))))
-
-(displayln "TEST 5 ->")
-(pretty-print (syntax->datum new-test-syntax))
-(pretty-print
- (lower-op-assign
-  (parse-L1 (new-cst->ast new-test-syntax))))
+(pretty-test "SYNTAX ->" (lambda () (syntax->datum new-test-syntax)))
+(pretty-test "TEST 1 ->" (lambda () (parse-L1 '(assign #t (x y) (10 24)))))
+(pretty-test "TEST 2 ->" (lambda () (new-cst->ast new-test-syntax)))
+(pretty-test "TEST 3 ->" (lambda () (parse-L1 (new-cst->ast new-test-syntax))))
+(pretty-test "TEST 4 ->" (lambda () (lower-op-assign (parse-L1 (new-cst->ast new-test-syntax)))))
 
 (displayln
  (generate-code
