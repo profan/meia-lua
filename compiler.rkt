@@ -298,12 +298,23 @@
     (for/list ([s (syntax->list #'(stmts ...))]
                #:when (not (is-comma s)))
       (extract-stmt s))
-    #'())))
+    #'()))
+  (pattern
+   ({~literal chunk}
+    laststmt:cst/laststat (~optional {~datum ";"}))
+   #:with expr #'(laststmt.expr))
+  (pattern
+   ({~literal chunk}
+    stmts:cst/stat ...)
+   #:with expr
+   (for/list ([s (syntax->list #'(stmts ...))]
+              #:when (not (is-comma s)))
+     (extract-stmt s))))
 
 (define-syntax-class cst/block
   (pattern
    ({~literal block} chk:cst/chunk)
-           #:with expr #'(chk.expr)))
+           #:with expr #'chk.expr))
 
 (define-syntax-class cst/stat
   (pattern
@@ -622,13 +633,12 @@
       end
       local explicit_func = function(but, why)
         local thing, other_thing = but, why
-        return
       end
       function variadic_things(...)
-        return ...
+        return 42
       end
       function does_things(a, b, c)
-        return 42
+        return 24
       end"))))
 
 (define (pretty-test name thunky)
