@@ -177,10 +177,6 @@
     {~datum "{"} (~optional fs:cst/fieldlist) {~datum "}"})
    #:with expr #'(table fs.expr)))
 
-(define (extract-field f)
-  (syntax-parse f
-    [f:cst/field (attribute f.expr)]))
-
 (define-syntax-class cst/fieldlist
   (pattern
    ({~literal fieldlist}
