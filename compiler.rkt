@@ -110,10 +110,8 @@
 
 (define-syntax-class cst/explist
   (pattern
-   ({~literal explist} (~or {~datum ","} es) ...)
-   #:with expr
-   (for/list ([e (syntax-e #'(es ...))])
-     (extract-expr e))))
+   ({~literal explist} (~or {~datum ","} es:cst/expr) ...)
+   #:with expr #'(es.expr ...)))
 
 (define-syntax-class cst/functioncall
   (pattern
@@ -321,9 +319,7 @@
   (pattern
    ({~literal chunk}
     (~or stmts:cst/stat {~datum ";"}) ...)
-   #:with expr
-   (for/list ([s (syntax->list #'(stmts ...))])
-     (extract-stmt s))))
+   #:with expr #'(stmts.expr ...)))
 
 (define-syntax-class cst/block
   (pattern
@@ -642,7 +638,7 @@
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
       local unary_foo, unary_bar = -foo, -bar
-      local some_table = {12, 24}
+      local some_table = {12, 24, 48}
       local what = false
       while what do
         local a, b, c = 1, 2, 3
