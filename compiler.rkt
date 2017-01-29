@@ -165,13 +165,16 @@
 (define-syntax-class cst/prefixexp
   (pattern
    ({~literal prefixexp}
-    var:cst/var))
+    v:cst/var)
+   #:with expr #'v.expr)
   (pattern
    ({~literal prefixexp}
-    fn:cst/functioncall))
+    fn:cst/functioncall)
+   #:with expr #'fn.expr)
   (pattern
    ({~literal prefixexp}
-    {~datum "("} cst/expr {~datum ")"})))
+    {~datum "("} e:cst/expr {~datum ")"})
+   #:with expr #'e.expr))
 
 (define-syntax-class cst/tableconstructor
   (pattern
@@ -237,8 +240,8 @@
    (exp lhs:cst/expr op:cst/binop rhs:cst/expr)
    #:with expr #'(binop op.expr lhs.expr rhs.expr))
   (pattern
-   pe:cst/prefixexp
-   #:with expr #'pe)
+   (exp pe:cst/prefixexp)
+   #:with expr #'(pe.expr))
   (pattern
    (exp op:cst/unop e:cst/expr)
    #:with expr #'(unop op.expr e.expr)))
@@ -247,7 +250,7 @@
   (pattern
    ({~literal var}
     v)
-   #:with expr #'v)
+   #:with expr (string->symbol (syntax->datum #'v)))
   (pattern
    ({~literal var}
     pe:cst/prefixexp {~datum "{"} e:cst/expr {~datum "}"})
@@ -308,14 +311,17 @@
    call:cst/functioncall
    #:with expr #'call.expr)
   (pattern
-   ({~datum "repeat"} blk:cst/block {~datum "until"} cnd:cst/expr)
+   ({~literal stat}
+    {~datum "repeat"} blk:cst/block {~datum "until"} cnd:cst/expr)
    #:with expr #'(repeat blk.expr cnd.expr))
   (pattern
-   ({~datum "do"} blk:cst/block {~datum "end"})
+   ({~literal stat}
+    {~datum "do"} blk:cst/block {~datum "end"})
    #:with expr #'(begin #t (blk.expr)))
   (pattern
-   ({~datum "while"} cnd:cst/expr {~datum "do"} blk:cst/block {~datum "end"})
-   #:with expr #'(while cnd.expr blk.expr))
+   ({~literal stat}
+    {~datum "while"} cnd:cst/expr {~datum "do"} blk:cst/block {~datum "end"})
+   #:with expr #'(while cnd.expr (begin #f blk.expr)))
   (pattern
    ({~literal stat}
     {~datum "function"}
@@ -608,6 +614,9 @@
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
       local what = false
+      while what do
+        local a, b, c = 1, 2, 3
+      end
       function variadic_things(...)
         return ...
       end
