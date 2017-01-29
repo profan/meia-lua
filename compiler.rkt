@@ -641,7 +641,7 @@
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
       local unary_foo, unary_bar = -foo, -bar
-      local some_table = {12, 24, 48, {}}
+      local some_table = {12, 24, 48, {}, {25 / 32}}
       local what = false
       while what do
         local a, b, c = 1, 2, 3
