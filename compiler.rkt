@@ -607,7 +607,7 @@
     (open-input-string
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
-      local what = 128
+      local what = false
       function variadic_things(...)
         return ...
       end
