@@ -177,14 +177,14 @@
     {~datum "{"} (~optional fs:cst/fieldlist) {~datum "}"})
    #:with expr #'(table fs.expr)))
 
-(define (extract-field fld)
-  (syntax-parse fld
-    [f:cst/field (attribute f.expr)]))
+(define (extract-field f)
+  (syntax-parse f
+    [e:cst/expr (attribute e.expr)]))
 
 (define-syntax-class cst/fieldlist
   (pattern
    ({~literal fieldlist}
-    fs:cst/field ...)
+    (~or cst/fieldsep fs:cst/field) ...)
    #:with expr
    (for/list ([f (syntax-e #'(fs ...))])
      (extract-field f))))
@@ -646,7 +646,7 @@
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
       local unary_foo, unary_bar = -foo, -bar
-      local some_table = {12}
+      local some_table = {12, 24, 32}
       local what = false
       while what do
         local a, b, c = 1, 2, 3
