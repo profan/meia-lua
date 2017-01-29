@@ -94,11 +94,12 @@
     [e #f]))
 
 (define-splicing-syntax-class cst/varlist
-  (pattern ({~literal varlist} (~seq vs:id ...))
-           #:with expr
-           (for/list ([id (syntax->list #'(vs ...))]
-                      #:when (not (eqv? (syntax->datum id) ",")))
-             (string->symbol (syntax->datum id)))))
+  (pattern
+   ({~literal varlist} (~seq vs:id ...))
+   #:with expr
+   (for/list ([id (syntax->list #'(vs ...))]
+              #:when (not (eqv? (syntax->datum id) ",")))
+     (string->symbol (syntax->datum id)))))
 
 (define-splicing-syntax-class cst/namelist
   (pattern
@@ -258,16 +259,22 @@
 (define-syntax-class cst/funcname
   (pattern
    ({~literal funcname}
-    var ;(~seq {~datum "."} vs) (~optional ({~datum ":"} v))
+    v ;(~seq {~datum "."} vs) (~optional ({~datum ":"} v))
     )
-   #:with expr #'var))
+   #:with expr (string->symbol (syntax->datum #'v))))
 
 (define-syntax-class cst/laststat
   (pattern
-   ({~datum "return"} (~optional es:cst/explist))
-   #:with expr #'(return es.expr))
+   ({~literal laststat}
+    {~datum "return"} es:cst/explist)
+   #:with expr #'(ret es.expr))
   (pattern
-   {~datum "break"}
+   ({~literal laststat}
+    {~datum "return"})
+   #:with expr #'(ret es))
+  (pattern
+   ({~literal laststat}
+    {~datum "break"})
    #:with expr #'(break)))
 
 (define (extract-stmt s)
@@ -275,6 +282,10 @@
     [stmt:cst/stat (attribute stmt.expr)]))
 
 (define-syntax-class cst/chunk
+  (pattern
+   ({~literal chunk}
+    stmt:cst/laststat (~optional {~datum ";"}))
+   #:with expr #'stmt.expr)
   (pattern
    ({~literal chunk} stmts ...)
    #:with expr
@@ -290,13 +301,11 @@
 (define-syntax-class cst/stat
   (pattern
    ({~literal stat}
-    {~datum "local"}
-    ns:cst/namelist {~datum "="} es:cst/explist)
-   #:with expr #'(assign #t ns.expr es.expr))
-  (pattern
-   ({~literal stat}
     vs:cst/varlist {~datum "="} es:cst/explist)
    #:with expr #'(assign #f vs.expr es.expr))
+  (pattern
+   call:cst/functioncall
+   #:with expr #'call.expr)
   (pattern
    ({~datum "repeat"} blk:cst/block {~datum "until"} cnd:cst/expr)
    #:with expr #'(repeat blk.expr cnd.expr))
@@ -311,7 +320,13 @@
     {~datum "function"}
     fname:cst/funcname
     fnbody:cst/funcbody)
-   #:with expr #'(assign #f (fn fname.expr fnbody.expr)))
+   #:with expr #'(assign #f (fname.expr) ((fn fnbody.expr))))
+  (pattern
+   ({~literal stat}
+    {~datum "local"}
+    ns:cst/namelist {~datum "="} es:cst/explist)
+   #:with expr #'(assign #t ns.expr es.expr))
+
   ;(pattern
    ;(~or
     ;cst/functioncall
@@ -591,9 +606,9 @@
     (open-input-string
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
+      local what = 128
       function does_things(a, b, c)
-        shoot_things()
-        return a, b, c
+        return 42
       end"))))
 
 (define (pretty-test name thunky)
