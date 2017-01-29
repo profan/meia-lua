@@ -184,10 +184,13 @@
 (define-syntax-class cst/fieldlist
   (pattern
    ({~literal fieldlist}
-    (~or cst/fieldsep fs:cst/field) ...)
+    (~and all ((~or cst/fieldsep fs:cst/field) ...)))
    #:with expr
-   (for/list ([f (syntax-e #'(fs ...))])
-     (extract-field f))))
+   (begin
+     (displayln (syntax->datum #'all))
+     (displayln (syntax->datum #'(fs ...)))
+     (for/list ([f (syntax-e #'(fs ...))])
+      (extract-field f)))))
 
 (define-syntax-class cst/field
   (pattern
@@ -197,7 +200,7 @@
    (field
     lhs:id {~datum "="} rhs:cst/expr))
   (pattern
-   (field
+   ({~literal field}
     e:cst/expr)
    #:with expr #'e.expr))
 
