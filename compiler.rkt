@@ -155,12 +155,12 @@
 
 (define-syntax-class cst/parlist
   (pattern
+   ({~literal parlist} {~datum "..."})
+   #:with expr '(...))
+  (pattern
    ({~literal parlist}
     ns:cst/namelist (~optional ({~datum ","} {~datum "..."})))
-   #:with expr #'ns.expr)
-  (pattern
-   {~datum "..."}
-   #:with expr '...))
+   #:with expr #'ns.expr))
 
 (define-syntax-class cst/prefixexp
   (pattern
@@ -219,12 +219,13 @@
 
 (define-syntax-class cst/expr
   (pattern
-   (~and s
-         (~or
-          {~datum "nil"}
-          {~datum "false"}
-          {~datum "true"}
-          {~datum "..."}))
+   (exp
+    (~and s
+          (~or
+           {~datum "nil"}
+           {~datum "false"}
+           {~datum "true"}
+           {~datum "..."})))
    #:with expr (string->symbol (syntax->datum #'s)))
   (pattern
    (exp n:number)
@@ -607,6 +608,9 @@
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
       local what = 128
+      function variadic_things(...)
+        return ...
+      end
       function does_things(a, b, c)
         return 42
       end"))))
