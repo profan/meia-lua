@@ -93,6 +93,11 @@
     [{~datum ","} #t]
     [e #f]))
 
+(define (is-semicolon s)
+  (syntax-parse s
+    [{~datum ";"} #t]
+    [e #f]))
+
 (define-splicing-syntax-class cst/varlist
   (pattern
    ({~literal varlist} (~seq vs:id ...))
@@ -290,13 +295,13 @@
 (define-syntax-class cst/chunk
   (pattern
    ({~literal chunk}
-    stmts:cst/stat ...
+    (~or stmts:cst/stat {~datum ";"}) ...
     (~optional
      (laststmt:cst/laststat (~optional {~datum ";"})) #:defaults ([laststmt #'()])))
    #:with expr
    (append
     (for/list ([s (syntax->list #'(stmts ...))]
-               #:when (not (is-comma s)))
+               #:when (not (is-semicolon s)))
       (extract-stmt s))
     #'()))
   (pattern
@@ -305,10 +310,10 @@
    #:with expr #'(laststmt.expr))
   (pattern
    ({~literal chunk}
-    stmts:cst/stat ...)
+    (~or stmts:cst/stat {~datum ";"}) ...)
    #:with expr
    (for/list ([s (syntax->list #'(stmts ...))]
-              #:when (not (is-comma s)))
+              #:when (not (is-semicolon s)))
      (extract-stmt s))))
 
 (define-syntax-class cst/block
@@ -633,6 +638,9 @@
       end
       local explicit_func = function(but, why)
         local thing, other_thing = but, why
+      end
+      function semicolon_things(a, b, c)
+        local a = b; local b = c; local a = c;
       end
       function variadic_things(...)
         return 42
