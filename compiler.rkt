@@ -241,7 +241,7 @@
    #:with expr #'(binop op.expr lhs.expr rhs.expr))
   (pattern
    (exp pe:cst/prefixexp)
-   #:with expr #'(pe.expr))
+   #:with expr #'pe.expr)
   (pattern
    (exp op:cst/unop e:cst/expr)
    #:with expr #'(unop op.expr e.expr)))
