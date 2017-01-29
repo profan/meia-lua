@@ -145,13 +145,15 @@
 
 (define-syntax-class cst/function
   (pattern
-   ({~datum "function"} cst/funcbody)))
+   ({~literal function}
+    {~datum "function"} fn:cst/funcbody)
+   #:with expr #'fn.expr))
 
 (define-syntax-class cst/funcbody
   (pattern
    ({~literal funcbody}
     {~datum "("} (~optional args:cst/parlist) {~datum ")"} blk:cst/block {~datum "end"})
-   #:with expr #'(fn args.expr blk.expr)))
+   #:with expr #'(fn args.expr (begin #f blk.expr))))
 
 (define-syntax-class cst/parlist
   (pattern
@@ -234,7 +236,7 @@
    (exp n:number)
    #:with expr #'n)
   (pattern
-   fn:cst/function
+   (exp fn:cst/function)
    #:with expr #'fn.expr)
   (pattern
    (exp lhs:cst/expr op:cst/binop rhs:cst/expr)
@@ -275,7 +277,7 @@
   (pattern
    ({~literal laststat}
     {~datum "return"})
-   #:with expr #'(ret es))
+   #:with expr #'(ret))
   (pattern
    ({~literal laststat}
     {~datum "break"})
@@ -288,19 +290,20 @@
 (define-syntax-class cst/chunk
   (pattern
    ({~literal chunk}
-    stmt:cst/laststat (~optional {~datum ";"}))
-   #:with expr #'stmt.expr)
-  (pattern
-   ({~literal chunk} stmts ...)
+    stmts:cst/stat ...
+    (~optional
+     (laststmt:cst/laststat (~optional {~datum ";"})) #:defaults ([laststmt #'()])))
    #:with expr
-   (for/list ([s (syntax->list #'(stmts ...))]
-              #:when (not (is-comma s)))
-     (extract-stmt s))))
+   (append
+    (for/list ([s (syntax->list #'(stmts ...))]
+               #:when (not (is-comma s)))
+      (extract-stmt s))
+    #'())))
 
 (define-syntax-class cst/block
   (pattern
    ({~literal block} chk:cst/chunk)
-           #:with expr #'chk.expr))
+           #:with expr #'(chk.expr)))
 
 (define-syntax-class cst/stat
   (pattern
@@ -317,7 +320,7 @@
   (pattern
    ({~literal stat}
     {~datum "do"} blk:cst/block {~datum "end"})
-   #:with expr #'(begin #t (blk.expr)))
+   #:with expr #'(begin #t blk.expr))
   (pattern
    ({~literal stat}
     {~datum "while"} cnd:cst/expr {~datum "do"} blk:cst/block {~datum "end"})
@@ -616,6 +619,10 @@
       local what = false
       while what do
         local a, b, c = 1, 2, 3
+      end
+      local explicit_func = function(but, why)
+        local thing, other_thing = but, why
+        return
       end
       function variadic_things(...)
         return ...
