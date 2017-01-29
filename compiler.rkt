@@ -151,7 +151,7 @@
   (pattern
    ({~literal funcbody}
     {~datum "("} (~optional args:cst/parlist) {~datum ")"} blk:cst/block {~datum "end"})
-   #:with expr #'(args.expr blk.expr)))
+   #:with expr #'(fn args.expr blk.expr)))
 
 (define-syntax-class cst/parlist
   (pattern
@@ -320,7 +320,7 @@
     {~datum "function"}
     fname:cst/funcname
     fnbody:cst/funcbody)
-   #:with expr #'(assign #f (fname.expr) ((fn fnbody.expr))))
+   #:with expr #'(assign #f (fname.expr) (fnbody.expr)))
   (pattern
    ({~literal stat}
     {~datum "local"}
@@ -514,7 +514,7 @@
 (lower-op-assign (parse-L1 '(op-assign #t "+" (x y z) (call print (25 32)))))
 (parse-L1 '(op-assign #t "+" (x) (binop "-" 35 25)))
 (lower-op-assign (parse-L1 '(op-assign #t "+" (x y) (24 (binop "-" 35 25)))))
-(lower-op-assign (parse-L1 '(fn () (ret (32)))))
+(lower-op-assign (parse-L1 '(fn (x y z) (ret (32)))))
 (displayln
  (generate-code (lower-op-assign (parse-L1 '(fn (a b c) (begin #f ((ret (32)))))))))
 
