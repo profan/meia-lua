@@ -48,9 +48,12 @@
    ({~literal args}
     (~and arg
           (~or
-           cst/tableconstructor
-           str)))
-   #:with expr #'arg.expr))
+           tc:cst/tableconstructor
+           s:str)))
+   #:with expr
+   (if (attribute tc.expr)
+       #'tc.expr
+       #'s)))
 
 (define-syntax-class cst/function
   (pattern
@@ -85,7 +88,7 @@
   (pattern
    ({~literal prefixexp}
     {~datum "("} e:cst/expr {~datum ")"})
-   #:with expr #'(e.expr)))
+   #:with expr #'(par e.expr)))
 
 (define-syntax-class cst/tableconstructor
   (pattern
@@ -256,6 +259,29 @@
    #:with expr #'(repeat blk.expr cnd.expr))
   (pattern
    ({~literal stat}
+    {~datum "for"}
+    v:id {~datum "="}
+    exp1:cst/expr {~datum ","} exp2:cst/expr
+    (~optional (~seq {~datum ","} exp3:cst/expr))
+    {~datum "do"}
+    blk:cst/block
+    {~datum "end"})
+   #:with expr
+   (if (attribute exp3.expr)
+       #'(for v exp1.expr exp2.expr exp3.expr (begin #f blk.expr))
+       #'(for v exp1.expr exp2.expr 1 (begin #f blk.expr))))
+  (pattern
+   ({~literal stat}
+    {~datum "for"}
+    ns:cst/namelist
+    {~datum "in"}
+    es:cst/explist
+    {~datum "do"}
+    blk:cst/block
+    {~datum "end"})
+   #:with expr #'(for ns.expr es.expr blk.expr))
+  (pattern
+   ({~literal stat}
     {~datum "do"} blk:cst/block {~datum "end"})
    #:with expr #'(begin #t blk.expr))
   (pattern
@@ -310,6 +336,7 @@
         (while e s)
         (repeat s e)
         (if e s s?)
+        (for n e0 e1 e2 s)
         (for (n* ... n) e s)
         (begin c (s* ...))
         (ret e* ...)
@@ -325,7 +352,7 @@
         (table e* ...)
         (unop o e0)
         (binop o e0 e1)
-        (e)
+        (par e)
         (e* ... e)))
 
 (define-parser parse-Lua Lua)
@@ -408,7 +435,7 @@
          (format "~a[~a]" (Expr e0) (Expr e1))]
         [(access ,e ,n)
          (format "~a.~a" (Expr e) n)]
-        [(,e) ; parenthesized expr
+        [(par ,e) ; parenthesized expr
          (format "(~a)" (Expr e))]
         [(,e* ... ,e)
          (format-list e e* #:sep ", ")])
@@ -429,6 +456,8 @@
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
         [(repeat ,s ,e)
          (format "repeat ~n ~a ~nuntil ~a" (Stmt s) (Expr e))]
+        [(for ,n ,e0 ,e1 ,e2 ,s)
+         (format "for ~a = ~a, ~a, ~a do ~n ~a ~nend" n (Expr e0) (Expr e1) (Expr e2) (Stmt s))]
         [(for (,n* ... ,n) ,e ,s)
          (format "for ~a in ~a do ~n ~a ~nend" (format-list n n* #:sep ", ") (Expr e) (Stmt s))]
         [(begin ,c (,s* ...))
@@ -543,6 +572,10 @@
    local this_thing_or_that_thing = (true and not 10) or 42
    some_string = \"hello, world!\"
    local what = false
+   for i = 1, 10 do
+     print \"yoink\"
+     print {}
+   end
    while what do
      local a, b, c = 1, 2, 3
    end
