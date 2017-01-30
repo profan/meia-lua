@@ -24,10 +24,6 @@
    (for/list ([name (syntax->list #'(ns ...))])
      (string->symbol (syntax->datum name)))))
 
-(define (extract-expr expr)
-  (syntax-parse expr
-    [e:cst/expr (attribute e.expr)]))
-
 (define-syntax-class cst/explist
   (pattern
    ({~literal explist} (~or {~datum ","} es:cst/expr) ...)
@@ -220,21 +216,7 @@
     {~datum "break"})
    #:with expr #'(break)))
 
-(define (extract-stmt s)
-  (syntax-parse s
-    [stmt:cst/stat (attribute stmt.expr)]))
-
 (define-syntax-class cst/chunk
-  (pattern
-   ({~literal chunk}
-    (~or stmts:cst/stat {~datum ";"}) ...
-    (~optional
-     (laststmt:cst/laststat (~optional {~datum ";"})) #:defaults ([laststmt #'()])))
-   #:with expr
-   (append
-    (for/list ([s (syntax->list #'(stmts ...))])
-      (extract-stmt s))
-    #'()))
   (pattern
    ({~literal chunk}
     laststmt:cst/laststat (~optional {~datum ";"}))
@@ -248,6 +230,11 @@
   (pattern
    ({~literal block} chk:cst/chunk)
            #:with expr #'chk.expr))
+
+(define-syntax-class cst/local
+  (pattern
+   {~datum "local"}
+   #:with expr #'#t))
 
 (define-syntax-class cst/stat
   (pattern
@@ -271,6 +258,13 @@
    #:with expr #'(while cnd.expr (begin #f blk.expr)))
   (pattern
    ({~literal stat}
+    {~datum "local"}
+    {~datum "function"}
+    fname:cst/var
+    fnbody:cst/funcbody)
+   #:with expr #'(assign #t (fname.expr) (fnbody.expr)))
+  (pattern
+   ({~literal stat}
     {~datum "function"}
     fname:cst/funcname
     fnbody:cst/funcbody)
@@ -281,15 +275,21 @@
     ns:cst/namelist {~datum "="} es:cst/explist)
    #:with expr #'(assign #t ns.expr es.expr))
 
-  ;(pattern
+   ;(pattern
    ;(~or
-    ;cst/functioncall
-    ;({~datum "if"} ife:cst/expr {~datum "then"} ifb:cst/block
-    ; (~seq ({~datum "elseif"} eifes:cst/expr {~datum "then"} eifbs:cst/block))
-    ; (~optional ({~datum "else"} elseb:cst/block))
-    ; {~datum "end"}))
-  ;#:with expr #'nil)
+   ;cst/functioncall
+   ;({~datum "if"} ife:cst/expr {~datum "then"} ifb:cst/block
+   ; (~seq ({~datum "elseif"} eifes:cst/expr {~datum "then"} eifbs:cst/block))
+   ; (~optional ({~datum "else"} elseb:cst/block))
+   ; {~datum "end"}))
+   ;#:with expr #'nil)
   )
+
+(define (test n stx)
+  (pretty-print
+   (syntax->datum
+    (for/fold ([stx stx]) ([_ n])
+      (expand-once stx)))))
 
 (define (new-cst->ast cst)
   `(begin #f
