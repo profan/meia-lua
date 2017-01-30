@@ -399,7 +399,7 @@
         [(call ,e ,e* ...)
          (format "~a(~a)" (Expr e) (format-list '() e* #:sep ", "))]
         [(unop ,o ,e)
-         (format "~a~a" o (Expr e))]
+         (format "~a ~a" o (Expr e))]
         [(binop ,o ,e1 ,e2)
          (format "~a ~a ~a" (Expr e1) o (Expr e2))]
         [(table ,e* ...)
@@ -540,7 +540,7 @@
    local foo, bar = 10 + 24, 24 + 48
    local unary_foo, unary_bar = -foo, -bar
    local some_table = {12, 24, 48, {}, {25 / 32}}
-   local this_thing_or_that_thing = (true and 10) or 42
+   local this_thing_or_that_thing = (true and not 10) or 42
    some_string = \"hello, world!\"
    local what = false
    while what do
