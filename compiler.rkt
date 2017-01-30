@@ -260,9 +260,11 @@
    ({~literal stat}
     {~datum "local"}
     {~datum "function"}
-    fname:cst/var
+    fname:str
+    (~bind [n (datum->syntax #f (string->symbol (syntax->datum #'fname)))])
     fnbody:cst/funcbody)
-   #:with expr #'(assign #t (fname.expr) (fnbody.expr)))
+   #:with expr
+   #'(assign #t (n) (fnbody.expr)))
   (pattern
    ({~literal stat}
     {~datum "function"}
@@ -273,7 +275,7 @@
    ({~literal stat}
     {~datum "local"}
     ns:cst/namelist {~datum "="} es:cst/explist)
-   #:with expr #'(assign #t ns.expr es.expr))
+  #:with expr #'(assign #t ns.expr es.expr))
 
    ;(pattern
    ;(~or
@@ -544,7 +546,7 @@
    function variadic_things(...)
      return 42
    end
-   function does_things(a, b, c)
+   local function does_things(a, b, c)
      return 24
    end")
 
