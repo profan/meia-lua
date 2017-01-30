@@ -1,89 +1,9 @@
 #lang nanopass
 
-(require brag/support)
+(require "lexer.rkt")
 (require "grammar.rkt")
+(require brag/support)
 (require syntax/parse)
-
-(define operators
-  '(("+" ADD)
-    ("-" SUB)
-    ("*" MUL)
-    ("/" DIV)
-    ("^" POW)
-    ("%" MOD)
-    ("(" LPAREN)
-    (")" RPAREN)
-    ("{" LBRACKET)
-    ("}" RBRACKET)
-    ("[" LSQUARE)
-    ("]" RSQUARE)
-    ("<" LT)
-    ("<=" LTEQ)
-    (">" GT)
-    (">=" GTEQ)
-    ("==" EQEQ)
-    ("~=" NEQ)
-    ("," COMMA)
-    ("..." VARIADIC)
-    (".." CONCAT)
-    ("." PERIOD)
-    (";" SEMICOLON)
-    ("#" LEN)
-    ("=" EQ)))
-
-(define operator-map
-  (make-hash operators))
-
-(define keywords
-  (make-hash
-   '(("if" IF)
-     ("else" ELSE)
-     ("elseif" ELSEIF)
-     ("for" FOR)
-     ("while" WHILE)
-     ("repeat" REPEAT)
-     ("until" UNTIL)
-     ("in" IN)
-     ("do" DO)
-     ("then" THEN)
-     ("end" END)
-     ("break" BREAK)
-     ("return" RETURN)
-     ("function" FUNCTION)
-     ("local" LOCAL)
-     ("true" TRUE)
-     ("false" FALSE)
-     ("nil" NIL)
-     ("and" AND)
-     ("or" OR)
-     ("not" NOT))))
-
-(define (expand-operators ops)
-  (string-join
-   (for/list ([op ops])
-     (regexp-quote (car op)))
-   "|"))
-
-(define id-regexp "(\\p{L}|\\_)+")
-
-(define (tokenize p)
-  (define ex-ops (expand-operators operators))
-  (define op-regexp (pregexp (format "\"[^\"]+\"|~a|\\p{N}+|~a" id-regexp ex-ops)))
-  (for/list ([b-str (regexp-match* op-regexp p)])
-    (define str (bytes->string/utf-8 b-str))
-    (cond
-      [(hash-has-key? operator-map str)
-       (token (car (hash-ref operator-map str)) str)]
-      [(hash-has-key? keywords str)
-       (token (car (hash-ref keywords str)) str)]
-      [else
-       (let* ([n (string->number str)])
-         (cond
-           [(number? n) (token 'NUM n)]
-           [else
-            (cond
-              [(string-prefix? str "\"") (token 'STR (string-trim str "\""))]
-              [else (token 'VAR str)])]))])))
 
 ;; CST to AST transformer here
 
@@ -379,28 +299,6 @@
 
 ;; AST parsing follows
 
-(define (name? n)
-  (define id-p (pregexp id-regexp))
-  (or
-   (regexp-match-exact? id-p (symbol->string n))
-   (eq? n '...))) ;; FIXME: this is pretty ...... horrible?
-
-(define (constant? x)
-  (or
-   (boolean? x)
-   (number? x)
-   (string? x)
-   (char? x)))
-
-(define (variable? x)
-  (symbol? x))
-
-(define (operator? x)
-  (hash-has-key? operator-map x))
-
-(define (keyword? x)
-  (hash-has-key? keywords x))
-
 (define-language Lua
   (terminals
    (name (n))
@@ -462,10 +360,10 @@
 ; (language->s-expression L1)
 
 (define (debug-print-data str)
-  (define tokens (tokenize (open-input-string str)))
-  (define parsed-data (parse tokens))
+  (define token-thunk (tokenizer-thunk (open-input-string str)))
+  (define parsed-data (parse token-thunk))
   (define syntax-data (syntax->datum parsed-data))
-  (pretty-print tokens)
+  (pretty-print (token-thunk))
   (pretty-print syntax-data))
 
 (debug-print-data "for value, other_value in pairs({12, 24}) do thing = 32 end")
@@ -588,7 +486,7 @@
 ;; cst to ast testing
 (define test-syntax
   (parse
-   (tokenize
+   (tokenizer-thunk
     (open-input-string
      "do
         local x, y, z = 24, 32
@@ -636,7 +534,7 @@
 
 (define new-test-syntax
   (parse
-   (tokenize
+   (tokenizer-thunk
     (open-input-string
      "local x, y, z = 12, 24, 32
       local foo, bar = 10 + 24, 24 + 48
