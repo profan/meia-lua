@@ -113,25 +113,6 @@
   (define (next-token) (my-lexer ip))
   next-token)
 
-(define (tokenize p)
-  (define ex-ops (expand-operators operators))
-  (define op-regexp (pregexp (format "\"[^\"]+\"|~a|\\p{N}+|~a" id-regexp ex-ops)))
-  (for/list ([b-str (regexp-match* op-regexp p)])
-    (define str (bytes->string/utf-8 b-str))
-    (cond
-      [(hash-has-key? operator-map str)
-       (token (car (hash-ref operator-map str)) str)]
-      [(hash-has-key? keywords str)
-       (token (car (hash-ref keywords str)) str)]
-      [else
-       (let* ([n (string->number str)])
-         (cond
-           [(number? n) (token 'NUM n)]
-           [else
-            (cond
-              [(string-prefix? str "\"") (token 'STR (string-trim str "\""))]
-              [else (token 'VAR str)])]))])))
-
 (provide
  name?
  constant?
