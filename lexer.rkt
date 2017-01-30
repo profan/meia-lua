@@ -3,6 +3,7 @@
 (require brag/support)
 (require "grammar.rkt")
 (require br-parser-tools/lex)
+(require (prefix-in : br-parser-tools/lex-sre))
 
 (define operators
   '(("+" ADD)
@@ -92,9 +93,12 @@
   (port-count-lines! ip)
   (define my-lexer
     (lexer-src-pos
-     [(repetition 1 +inf.0 alphabetic) (token 'VAR lexeme)]
-     [numeric (token 'NUM lexeme)]
-     [whitespace (token 'WHITESPACE lexeme #:skip? #t)]
+     [(repetition 1 +inf.0 alphabetic)
+      (token 'VAR lexeme)]
+     [(:: (repetition 1 +inf.0 numeric) (:? ".") (repetition 0 +inf.0 numeric))
+      (token 'NUM lexeme)]
+     [whitespace
+      (token 'WHITESPACE lexeme #:skip? #t)]
      [(eof) (void)]))
   (define (next-token) (my-lexer ip))
   next-token)
