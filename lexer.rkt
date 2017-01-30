@@ -81,6 +81,8 @@
 (define (keyword? x)
   (hash-has-key? keywords x))
 
+(define id-regexp "(\\p{L}|\\_)+")
+
 (define (tokenizer-thunk ip)
   (port-count-lines! ip)
   (define my-lexer
