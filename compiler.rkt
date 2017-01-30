@@ -11,18 +11,13 @@
 
 (define-splicing-syntax-class cst/varlist
   (pattern
-   ({~literal varlist} (~seq vs:id ...))
-   #:with expr
-   (for/list ([id (syntax->list #'(vs ...))]
-              #:when (not (eqv? (syntax->datum id) ",")))
-     (string->symbol (syntax->datum id)))))
+   ({~literal varlist} (~seq vs:cst/var ...))
+   #:with expr #'(vs.expr ...)))
 
 (define-splicing-syntax-class cst/namelist
   (pattern
-   ({~literal namelist} (~or {~datum ","} ns) ...)
-   #:with expr
-   (for/list ([name (syntax->list #'(ns ...))])
-     (string->symbol (syntax->datum name)))))
+   ({~literal namelist} (~or {~datum ","} ns:id) ...)
+   #:with expr #'(ns ...)))
 
 (define-syntax-class cst/explist
   (pattern
@@ -166,6 +161,9 @@
    (exp n:number)
    #:with expr #'n)
   (pattern
+   (exp s:str)
+   #:with expr #'s)
+  (pattern
    (exp fn:cst/function)
    #:with expr #'fn.expr)
   (pattern
@@ -184,8 +182,8 @@
 (define-syntax-class cst/var
   (pattern
    ({~literal var}
-    v:str)
-   #:with expr (string->symbol (syntax->datum #'v)))
+    v:id)
+   #:with expr #'v)
   (pattern
    ({~literal var}
     pe:cst/prefixexp {~datum "["} e:cst/expr {~datum "]"})
@@ -198,9 +196,9 @@
 (define-syntax-class cst/funcname
   (pattern
    ({~literal funcname}
-    v:str ;(~seq {~datum "."} vs) (~optional ({~datum ":"} v))
+    v:id ;(~seq {~datum "."} vs) (~optional ({~datum ":"} v))
     )
-   #:with expr (string->symbol (syntax->datum #'v))))
+   #:with expr #'v))
 
 (define-syntax-class cst/laststat
   (pattern
@@ -260,11 +258,9 @@
    ({~literal stat}
     {~datum "local"}
     {~datum "function"}
-    fname:str
-    (~bind [n (datum->syntax #f (string->symbol (syntax->datum #'fname)))])
+    fname:id
     fnbody:cst/funcbody)
-   #:with expr
-   #'(assign #t (n) (fnbody.expr)))
+   #:with expr #'(assign #t (fname) (fnbody.expr)))
   (pattern
    ({~literal stat}
     {~datum "function"}
@@ -387,7 +383,7 @@
         [,x (~a x)]
         [,c
          (cond
-           [(or (string? c) (char? c)) (format "\"~a\"" c)]
+           [(or (string? c) (char? c)) (format "~a" c)]
            [(number? c) (~a c)])]
         [(fn (,n* ...) ,s)
          (format "function (~a) ~n ~a ~nend" (format-list '() n* #:sep ", ") (Stmt s))]
@@ -533,6 +529,7 @@
    local foo, bar = 10 + 24, 24 + 48
    local unary_foo, unary_bar = -foo, -bar
    local some_table = {12, 24, 48, {}, {25 / 32}}
+   some_string = \"hello, world!\"
    local what = false
    while what do
      local a, b, c = 1, 2, 3
