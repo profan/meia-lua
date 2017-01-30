@@ -95,8 +95,10 @@
     (lexer-src-pos
      [(repetition 1 +inf.0 (:or alphabetic (char-set "_")))
       (cond
-        [(hash-has-key? keywords lexeme) (token (car (hash-ref keywords lexeme)) lexeme)]
-        [else (token 'VAR lexeme)])]
+        [(hash-has-key? keywords lexeme)
+         (token (car (hash-ref keywords lexeme)) lexeme)]
+        [else
+         (token 'VAR lexeme)])]
      [(:: (repetition 1 +inf.0 numeric) (:? ".") (repetition 0 +inf.0 numeric))
       (token 'NUM (string->number lexeme))]
      [(:: "\"" (:* (:- any-char "\"")) "\"")

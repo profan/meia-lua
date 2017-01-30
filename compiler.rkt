@@ -532,30 +532,32 @@
         end
       end"))))
 
+(define syntax-stuff
+  "local x, y, z = 12, 24, 32
+   local foo, bar = 10 + 24, 24 + 48
+   local unary_foo, unary_bar = -foo, -bar
+   local some_table = {12, 24, 48, {}, {25 / 32}}
+   local what = false
+   while what do
+     local a, b, c = 1, 2, 3
+   end
+   local explicit_func = function(but, why)
+     local thing, other_thing = but, why
+   end
+   function semicolon_things(a, b, c)
+     local a = b; local b = c; local a = c;
+   end
+   function variadic_things(...)
+     return 42
+   end
+   function does_things(a, b, c)
+     return 24
+   end")
+
 (define new-test-syntax
   (parse
    (tokenizer-thunk
-    (open-input-string
-     "local x, y, z = 12, 24, 32
-      local foo, bar = 10 + 24, 24 + 48
-      local unary_foo, unary_bar = -foo, -bar
-      local some_table = {12, 24, 48, {}, {25 / 32}}
-      local what = false
-      while what do
-        local a, b, c = 1, 2, 3
-      end
-      local explicit_func = function(but, why)
-        local thing, other_thing = but, why
-      end
-      function semicolon_things(a, b, c)
-        local a = b; local b = c; local a = c;
-      end
-      function variadic_things(...)
-        return 42
-      end
-      function does_things(a, b, c)
-        return 24
-      end"))))
+    (open-input-string syntax-stuff))))
 
 (define (pretty-test name thunky)
   (displayln name)
