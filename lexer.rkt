@@ -94,9 +94,15 @@
   (define my-lexer
     (lexer-src-pos
      [(repetition 1 +inf.0 alphabetic)
-      (token 'VAR lexeme)]
+      (cond
+        [(hash-has-key? keywords lexeme) (token (car (hash-ref keywords lexeme)) lexeme)]
+        [else (token 'VAR lexeme)])]
      [(:: (repetition 1 +inf.0 numeric) (:? ".") (repetition 0 +inf.0 numeric))
       (token 'NUM lexeme)]
+     [(repetition 1 2 (:& any-char (:~ whitespace)))
+      (cond
+        [(hash-has-key? operator-map lexeme) (token (car (hash-ref operator-map lexeme)) lexeme)]
+        [else (error (format "encountered unknown operator: ~a" lexeme))])]
      [whitespace
       (token 'WHITESPACE lexeme #:skip? #t)]
      [(eof) (void)]))
