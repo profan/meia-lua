@@ -30,7 +30,10 @@
     ("." PERIOD)
     (";" SEMICOLON)
     ("#" LEN)
-    ("=" EQ)))
+    ("=" EQ)
+    ("and" AND)
+    ("or" OR)
+    ("not" NOT)))
 
 (define operator-map
   (make-hash operators))
@@ -54,10 +57,7 @@
      ("local" LOCAL)
      ("true" TRUE)
      ("false" FALSE)
-     ("nil" NIL)
-     ("and" AND)
-     ("or" OR)
-     ("not" NOT))))
+     ("nil" NIL))))
 
 (define id-regexp "(\\p{L}|\\_)+")
 
@@ -87,6 +87,13 @@
   (port-count-lines! ip)
   (define my-lexer
     (lexer-src-pos
+     [(:or
+       "(" ")" "{" "}" "[" "]"
+       "+" "-" "*" "/" "%" "^" "="
+       ">" ">=" "<" "<=" "==" "~="
+       "#" "..." ".." ";" ","
+       ":" "." "and" "or" "not")
+      (token (car (hash-ref operator-map lexeme)) lexeme)]
      [(repetition 1 +inf.0 (:or alphabetic (char-set "_")))
       (cond
         [(hash-has-key? keywords lexeme)
@@ -97,13 +104,6 @@
       (token 'NUM (string->number lexeme))]
      [(:: "\"" (:* (:- any-char "\"")) "\"")
       (token 'STR lexeme)]
-     [(:or
-       "(" ")" "{" "}" "[" "]"
-       "+" "-" "*" "/" "%" "^" "="
-       ">" ">=" "<" "<=" "==" "~="
-       "#" "..." ".." ";" ","
-       ":" ".")
-      (token (car (hash-ref operator-map lexeme)) lexeme)]
      [whitespace
       (token 'WHITESPACE lexeme #:skip? #t)]
      [(eof) (void)]))

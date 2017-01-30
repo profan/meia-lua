@@ -85,7 +85,7 @@
   (pattern
    ({~literal prefixexp}
     {~datum "("} e:cst/expr {~datum ")"})
-   #:with expr #'e.expr))
+   #:with expr #'(e.expr)))
 
 (define-syntax-class cst/tableconstructor
   (pattern
@@ -325,6 +325,7 @@
         (table e* ...)
         (unop o e0)
         (binop o e0 e1)
+        (e)
         (e* ... e)))
 
 (define-parser parse-Lua Lua)
@@ -407,6 +408,8 @@
          (format "~a[~a]" (Expr e0) (Expr e1))]
         [(access ,e ,n)
          (format "~a.~a" (Expr e) n)]
+        [(,e) ; parenthesized expr
+         (format "(~a)" (Expr e))]
         [(,e* ... ,e)
          (format-list e e* #:sep ", ")])
   (Stmt : Stmt(ir) -> *()
@@ -537,6 +540,7 @@
    local foo, bar = 10 + 24, 24 + 48
    local unary_foo, unary_bar = -foo, -bar
    local some_table = {12, 24, 48, {}, {25 / 32}}
+   local this_thing_or_that_thing = (true and 10) or 42
    some_string = \"hello, world!\"
    local what = false
    while what do
