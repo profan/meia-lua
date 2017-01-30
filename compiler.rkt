@@ -27,23 +27,29 @@
 (define-syntax-class cst/functioncall
   (pattern
    ({~literal functioncall}
-    cst/prefixexp {~datum ":"} var:id args:cst/args))
+    pe:cst/prefixexp {~datum ":"} var:id args:cst/args)
+   #:with expr #'(call (access pe.expr var.expr) args.expr))
   (pattern
    ({~literal functioncall}
-    cst/prefixexp cst/args)))
+    pe:cst/prefixexp args:cst/args)
+   #:with expr #'(call pe.expr args.expr)))
 
 (define-syntax-class cst/args
   (pattern
-   ({~datum "("}
+   ({~literal args}
+    {~datum "("}
     (~optional
      elist:cst/explist
      #:defaults ([elist #'()]))
     {~datum ")"})
-   #:with expr #'elist)
+   #:with expr #'elist.expr)
   (pattern
-   (~or
-    cst/tableconstructor
-    str)))
+   ({~literal args}
+    (~and arg
+          (~or
+           cst/tableconstructor
+           str)))
+   #:with expr #'arg.expr))
 
 (define-syntax-class cst/function
   (pattern
@@ -240,7 +246,8 @@
     vs:cst/varlist {~datum "="} es:cst/explist)
    #:with expr #'(assign #f vs.expr es.expr))
   (pattern
-   call:cst/functioncall
+   ({~literal stat}
+    call:cst/functioncall)
    #:with expr #'call.expr)
   (pattern
    ({~literal stat}
@@ -536,6 +543,7 @@
    end
    local explicit_func = function(but, why)
      local thing, other_thing = but, why
+     shoot_things(\"hello, world!\", 12, 24, 32, {})
    end
    function semicolon_things(a, b, c)
      local a = b; local b = c; local a = c;
