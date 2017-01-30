@@ -59,12 +59,6 @@
      ("or" OR)
      ("not" NOT))))
 
-(define (expand-operators ops)
-  (string-join
-   (for/list ([op ops])
-     (regexp-quote (car op)))
-   "|"))
-
 (define (name? n)
   (define id-p (pregexp id-regexp))
   (or
@@ -86,8 +80,6 @@
 
 (define (keyword? x)
   (hash-has-key? keywords x))
-
-(define id-regexp "(\\p{L}|\\_)+")
 
 (define (tokenizer-thunk ip)
   (port-count-lines! ip)
