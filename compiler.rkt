@@ -184,7 +184,7 @@
 (define-syntax-class cst/var
   (pattern
    ({~literal var}
-    v)
+    v:str)
    #:with expr (string->symbol (syntax->datum #'v)))
   (pattern
    ({~literal var}
@@ -198,7 +198,7 @@
 (define-syntax-class cst/funcname
   (pattern
    ({~literal funcname}
-    v ;(~seq {~datum "."} vs) (~optional ({~datum ":"} v))
+    v:str ;(~seq {~datum "."} vs) (~optional ({~datum ":"} v))
     )
    #:with expr (string->symbol (syntax->datum #'v))))
 
@@ -284,12 +284,6 @@
    ; {~datum "end"}))
    ;#:with expr #'nil)
   )
-
-(define (test n stx)
-  (pretty-print
-   (syntax->datum
-    (for/fold ([stx stx]) ([_ n])
-      (expand-once stx)))))
 
 (define (new-cst->ast cst)
   `(begin #f
