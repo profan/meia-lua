@@ -65,7 +65,10 @@
   (pattern
    ({~literal funcbody}
     {~datum "("} (~optional args:cst/parlist) {~datum ")"} blk:cst/block {~datum "end"})
-   #:with expr #'(fn args.expr (begin #f blk.expr))))
+   #:with expr
+   (if (attribute args.expr)
+       #'(fn args.expr (begin #f blk.expr))
+       #'(fn () (begin #f blk.expr)))))
 
 (define-syntax-class cst/parlist
   (pattern
@@ -206,9 +209,8 @@
 (define-syntax-class cst/funcname
   (pattern
    ({~literal funcname}
-    v:id ;(~seq {~datum "."} vs) (~optional ({~datum ":"} v))
-    )
-   #:with expr #'v))
+    v1:id (~optional (~seq {~datum "."} vs:id)) (~optional ({~datum ":"} v2:id)))
+   #:with expr #'v1))
 
 (define-syntax-class cst/laststat
   (pattern
@@ -586,6 +588,8 @@
    end
    function semicolon_things(a, b, c)
      local a = b; local b = c; local a = c;
+   end
+   local function argless_locality()
    end
    function variadic_things(...)
      return 42
