@@ -59,6 +59,8 @@
      ("or" OR)
      ("not" NOT))))
 
+(define id-regexp "(\\p{L}|\\_)+")
+
 (define (name? n)
   (define id-p (pregexp id-regexp))
   (or
@@ -81,8 +83,6 @@
 (define (keyword? x)
   (hash-has-key? keywords x))
 
-(define id-regexp "(\\p{L}|\\_)+")
-
 (define (tokenizer-thunk ip)
   (port-count-lines! ip)
   (define my-lexer
@@ -101,7 +101,8 @@
        "(" ")" "{" "}" "[" "]"
        "+" "-" "*" "/" "%" "^" "="
        ">" ">=" "<" "<=" "==" "~="
-       "#" "..." ".." ";" ",")
+       "#" "..." ".." ";" ","
+       ":" ".")
       (token (car (hash-ref operator-map lexeme)) lexeme)]
      [whitespace
       (token 'WHITESPACE lexeme #:skip? #t)]

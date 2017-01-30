@@ -38,11 +38,12 @@
   (pattern
    ({~literal args}
     {~datum "("}
-    (~optional
-     elist:cst/explist
-     #:defaults ([elist #'()]))
+    (~optional elist:cst/explist)
     {~datum ")"})
-   #:with expr #'elist.expr)
+   #:with expr
+   (if (attribute elist.expr)
+       #'elist.expr
+       #'#f))
   (pattern
    ({~literal args}
     (~and arg
@@ -193,7 +194,7 @@
   (pattern
    ({~literal var}
     pe:cst/prefixexp {~datum "["} e:cst/expr {~datum "]"})
-   #:with expr #'(table e.expr))
+   #:with expr #'(index pe.expr e.expr))
   (pattern
    ({~literal var}
     pe:cst/prefixexp {~datum "."} v:id)
@@ -247,8 +248,8 @@
    #:with expr #'(assign #f vs.expr es.expr))
   (pattern
    ({~literal stat}
-    call:cst/functioncall)
-   #:with expr #'call.expr)
+    fncall:cst/functioncall)
+   #:with expr #'fncall.expr)
   (pattern
    ({~literal stat}
     {~datum "repeat"} blk:cst/block {~datum "until"} cnd:cst/expr)
@@ -318,7 +319,7 @@
         x ;; variable
         c ;; constant
         (fn (n* ...) s)
-        (call n e* ...)
+        (call e e* ...)
         (access e n)
         (index e0 e1)
         (table e* ...)
@@ -394,8 +395,8 @@
            [(number? c) (~a c)])]
         [(fn (,n* ...) ,s)
          (format "function (~a) ~n ~a ~nend" (format-list '() n* #:sep ", ") (Stmt s))]
-        [(call ,n ,e* ...)
-         (format "~a(~a)" n (format-list '() e* #:sep ", "))]
+        [(call ,e ,e* ...)
+         (format "~a(~a)" (Expr e) (format-list '() e* #:sep ", "))]
         [(unop ,o ,e)
          (format "~a~a" o (Expr e))]
         [(binop ,o ,e1 ,e2)
@@ -475,7 +476,7 @@
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '(access love update)))))
+   (parse-L1 '(call (access (access love graphics) rectangle))))))
 
 (displayln
  (generate-code
@@ -544,6 +545,7 @@
    local explicit_func = function(but, why)
      local thing, other_thing = but, why
      shoot_things(\"hello, world!\", 12, 24, 32, {})
+     bong.fucked(12, 24, 36)
    end
    function semicolon_things(a, b, c)
      local a = b; local b = c; local a = c;
