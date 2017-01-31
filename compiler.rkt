@@ -76,8 +76,15 @@
    #:with expr '(...))
   (pattern
    ({~literal parlist}
-    ns:cst/namelist (~optional ({~datum ","} {~datum "..."})))
-   #:with expr #'ns.expr))
+    ns:cst/namelist
+    (~optional (~seq {~datum ","} (~and v {~datum "..."}))))
+   #:with expr
+   (begin
+     (if (attribute v)
+         (append
+          (syntax-e #'ns.expr)
+          (list '...))
+        #'ns.expr))))
 
 (define-syntax-class cst/prefixexp
   (pattern
@@ -591,7 +598,7 @@
    end
    local function argless_locality()
    end
-   function variadic_things(...)
+   function variadic_things(f, g, h, ...)
      return 42
    end
    local function does_things(a, b, c)
