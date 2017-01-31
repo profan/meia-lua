@@ -84,7 +84,7 @@
          (append
           (syntax-e #'ns.expr)
           (list '...))
-        #'ns.expr))))
+         #'ns.expr))))
 
 (define-syntax-class cst/prefixexp
   (pattern
@@ -581,6 +581,9 @@
    local this_thing_or_that_thing = (true and not 10) or 42
    some_string = \"hello, world!\"
    local what = false
+   for k, v in pairs({1, 2, 3, 4}) do
+     print(k, v)
+   end
    for i = 1, 10 do
      print \"yoink\"
      print {}
