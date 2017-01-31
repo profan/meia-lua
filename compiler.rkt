@@ -608,9 +608,10 @@
    local function argless_locality()
    end
    function less_variadic_things(...)
-     function u_wot_mate(f)
+     local upvalue = false
+     return function(...)
+       return upvalue, ...
      end
-     return ...
    end
    shooter:shoot_things(32):reduce(42)
    function more_variadic_things(f, g, h, ...)
