@@ -288,7 +288,7 @@
     {~datum "do"}
     blk:cst/block
     {~datum "end"})
-   #:with expr #'(for ns.expr es.expr blk.expr))
+   #:with expr #'(for ns.expr es.expr (begin #f blk.expr)))
   (pattern
    ({~literal stat}
     {~datum "do"} blk:cst/block {~datum "end"})
@@ -582,6 +582,7 @@
    some_string = \"hello, world!\"
    local what = false
    for k, v in pairs({1, 2, 3, 4}) do
+     local wat = false
      print(k, v)
    end
    for i = 1, 10 do
