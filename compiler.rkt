@@ -257,9 +257,10 @@
    {~datum "local"}
    #:with expr #'#t))
 
-(define-syntax-class cst/if)
-(define-syntax-class cst/elseif)
-(define-syntax-class cst/else)
+(define-splicing-syntax-class cst/elseif
+  (pattern
+   (~seq {~datum "elseif"} e:cst/expr {~datum "then"} b:cst/block)
+   #:with expr #'(if e.expr (begin #f b.expr) () #f #f)))
 
 (define-syntax-class cst/stat
   (pattern
@@ -280,13 +281,17 @@
     e:cst/expr
     {~datum "then"}
     blk:cst/block
-    (~seq {~datum "elseif"} es:cst/expr {~datum "then"} bs:cst/block) ...
+    eifs:cst/elseif ...
     (~optional (~seq {~datum "else"} eblk:cst/block))
     {~datum "end"})
    #:with expr
-   (if (attribute es)
-       #'(if e.expr (begin #f blk.expr) #f)
-       #'(if e.expr (begin #f blk.expr) #f)))
+   (cond
+     [(and (attribute eifs.expr) (attribute eblk.expr))
+      #'(if e.expr (begin #f blk.expr) (eifs.expr ...) eblk.expr #t)]
+     [(attribute eifs.expr)
+      #'(if e.expr (begin #f blk.expr) (eifs.expr ...) #f #t)]
+     [else
+      #'(if e.expr (begin #f blk.expr) () #f #t)]))
   (pattern
    ({~literal stat}
     {~datum "for"}
@@ -365,7 +370,7 @@
         (assign c (x* ... x) (e* ... e))
         (while e s)
         (repeat s e)
-        (if e s s?)
+        (if e s (s* ...) s? c?)
         (for n e0 e1 e2 s)
         (for (n* ... n) e s)
         (begin c (s* ...))
@@ -475,13 +480,18 @@
                  (if c "local " "")
                  (format-list x x* #:sep ", ")
                  (format-list e e* #:sep ", "))]
-        [(if ,e ,s ,s?)
+        [(if ,e ,s (,s* ...) ,s? ,c?)
          (begin
            (define els
              (match s?
                [#f ""]
-               [es (Stmt s?)]))
-           (format "if ~a then ~n ~a ~a~nend" (Expr e) (Stmt s) els))]
+               [es (format "else ~n~a~n" (Stmt s?))]))
+           (define eifs
+             (string-join
+              (for/list ([stmt s*])
+                (format "~nelse~a" (Stmt stmt))) ""))
+           (define is-end (if c? "end" ""))
+           (format "if ~a then ~n ~a~a~a~a" (Expr e) (Stmt s) eifs els is-end))]
         [(while ,e ,s)
          (format "while ~a do ~n ~a ~nend" (Expr e) (Stmt s))]
         [(repeat ,s ,e)
