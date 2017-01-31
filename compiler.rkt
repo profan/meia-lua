@@ -340,17 +340,7 @@
    ({~literal stat}
     {~datum "local"}
     ns:cst/namelist {~datum "="} es:cst/explist)
-  #:with expr #'(assign #t ns.expr es.expr))
-
-   ;(pattern
-   ;(~or
-   ;cst/functioncall
-   ;({~datum "if"} ife:cst/expr {~datum "then"} ifb:cst/block
-   ; (~seq ({~datum "elseif"} eifes:cst/expr {~datum "then"} eifbs:cst/block))
-   ; (~optional ({~datum "else"} elseb:cst/block))
-   ; {~datum "end"}))
-   ;#:with expr #'nil)
-  )
+  #:with expr #'(assign #t ns.expr es.expr)))
 
 (define (new-cst->ast cst)
   `(begin #f
