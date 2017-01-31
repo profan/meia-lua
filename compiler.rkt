@@ -240,13 +240,17 @@
    #:with expr #'(laststmt.expr))
   (pattern
    ({~literal chunk}
-    (~or stmts:cst/stat {~datum ";"}) ...)
-   #:with expr #'(stmts.expr ...)))
+    (~or stmts:cst/stat {~datum ";"}) ...
+    (~optional (~seq laststmt:cst/laststat (~optional {~datum ";"}))))
+   #:with expr
+   (if (attribute laststmt.expr)
+       #'(stmts.expr ... laststmt.expr)
+       #'(stmts.expr ...))))
 
 (define-syntax-class cst/block
   (pattern
    ({~literal block} chk:cst/chunk)
-           #:with expr #'chk.expr))
+   #:with expr #'chk.expr))
 
 (define-syntax-class cst/local
   (pattern
@@ -599,6 +603,7 @@
    end
    function semicolon_things(a, b, c)
      local a = b; local b = c; local a = c;
+     return a, b, c
    end
    local function argless_locality()
    end
