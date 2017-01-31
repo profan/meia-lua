@@ -27,6 +27,7 @@
     ("," COMMA)
     ("..." VARIADIC)
     (".." CONCAT)
+    (":" COLON)
     ("." PERIOD)
     (";" SEMICOLON)
     ("#" LEN)

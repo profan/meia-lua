@@ -28,7 +28,7 @@
   (pattern
    ({~literal functioncall}
     pe:cst/prefixexp {~datum ":"} var:id args:cst/args)
-   #:with expr #'(call (access pe.expr var.expr) args.expr))
+   #:with expr #'(call (access #t pe.expr var) args.expr))
   (pattern
    ({~literal functioncall}
     pe:cst/prefixexp args:cst/args)
@@ -211,7 +211,7 @@
   (pattern
    ({~literal var}
     pe:cst/prefixexp {~datum "."} v:id)
-   #:with expr #'(access pe.expr v)))
+   #:with expr #'(access #f pe.expr v)))
 
 (define-syntax-class cst/funcname
   (pattern
@@ -360,7 +360,7 @@
         c ;; constant
         (fn (n* ...) s)
         (call e e* ...)
-        (access e n)
+        (access c e n)
         (index e0 e1)
         (table e* ...)
         (unop o e0)
@@ -446,8 +446,8 @@
          (format "{~a}" (format-list '() e* #:sep ", "))]
         [(index ,e0 ,e1)
          (format "~a[~a]" (Expr e0) (Expr e1))]
-        [(access ,e ,n)
-         (format "~a.~a" (Expr e) n)]
+        [(access ,c ,e ,n)
+         (format "~a~a~a" (Expr e) (if c ":" ".") n)]
         [(par ,e) ; parenthesized expr
          (format "(~a)" (Expr e))]
         [(,e* ... ,e)
@@ -521,7 +521,7 @@
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 '(call (access (access love graphics) rectangle))))))
+   (parse-L1 '(call (access #f (access #f love graphics) rectangle))))))
 
 (displayln
  (generate-code
@@ -612,6 +612,7 @@
      end
      return ...
    end
+   shooter:shoot_things(32):reduce(42)
    function more_variadic_things(f, g, h, ...)
      return 42
    end
