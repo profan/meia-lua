@@ -608,6 +608,8 @@
    local function argless_locality()
    end
    function less_variadic_things(...)
+     function u_wot_mate(f)
+     end
      return ...
    end
    function more_variadic_things(f, g, h, ...)
