@@ -95,7 +95,8 @@
        "#" "..." ".." ";" ","
        ":" "." "and" "or" "not")
       (token (car (hash-ref operator-map lexeme)) lexeme)]
-     [(repetition 1 +inf.0 (:or alphabetic (char-set "_")))
+     [(:: (:or alphabetic (char-set "_"))
+          (repetition 0 +inf.0 (:or alphabetic numeric (char-set "_"))))
       (cond
         [(hash-has-key? keywords lexeme)
          (token (car (hash-ref keywords lexeme)) lexeme)]
@@ -105,6 +106,10 @@
       (token 'NUM (string->number lexeme))]
      [(:: "\"" (:* (:- any-char "\"")) "\"")
       (token 'STR lexeme)]
+     [(:: "'" (:* (:- any-char "'")) "'")
+      (token 'STR lexeme)]
+     [(:: "--" (repetition 1 +inf.0 (:~ "\n")))
+      (token 'COMMENT lexeme #:skip? #t)]
      [whitespace
       (token 'WHITESPACE lexeme #:skip? #t)]
      [(eof) (void)]))

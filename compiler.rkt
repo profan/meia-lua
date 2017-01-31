@@ -652,6 +652,12 @@
    (tokenizer-thunk
     (open-input-string syntax-stuff))))
 
+(define real-test-syntax
+  (call-with-input-file "examples/timecop.lua"
+    (lambda (ip)
+      (parse
+       (tokenizer-thunk ip)))))
+
 (define (pretty-test name thunky)
   (displayln name)
   (pretty-print (thunky))
