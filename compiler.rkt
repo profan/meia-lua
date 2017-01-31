@@ -257,6 +257,10 @@
    {~datum "local"}
    #:with expr #'#t))
 
+(define-syntax-class cst/if)
+(define-syntax-class cst/elseif)
+(define-syntax-class cst/else)
+
 (define-syntax-class cst/stat
   (pattern
    ({~literal stat}
@@ -270,6 +274,19 @@
    ({~literal stat}
     {~datum "repeat"} blk:cst/block {~datum "until"} cnd:cst/expr)
    #:with expr #'(repeat blk.expr cnd.expr))
+  (pattern
+   ({~literal stat}
+    {~datum "if"}
+    e:cst/expr
+    {~datum "then"}
+    blk:cst/block
+    (~seq {~datum "elseif"} es:cst/expr {~datum "then"} bs:cst/block) ...
+    (~optional (~seq {~datum "else"} eblk:cst/block))
+    {~datum "end"})
+   #:with expr
+   (if (attribute es)
+       #'(if e.expr (begin #f blk.expr) #f)
+       #'(if e.expr (begin #f blk.expr) #f)))
   (pattern
    ({~literal stat}
     {~datum "for"}
@@ -596,6 +613,15 @@
    while what do
      local a, b, c = 1, 2, 3
    end
+   if what then
+     print \"yes what?\"
+   elseif not what then
+     print \"not what?\"
+   elseif 25 then
+   else
+     print \"well then\"
+   end
+   if what then print \"nope\" end
    local explicit_func = function(but, why)
      local thing, other_thing = but, why
      shoot_things(\"hello, world!\", 12, 24, 32, {})
