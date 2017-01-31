@@ -601,7 +601,10 @@
    end
    local function argless_locality()
    end
-   function variadic_things(f, g, h, ...)
+   function less_variadic_things(...)
+     return ...
+   end
+   function more_variadic_things(f, g, h, ...)
      return 42
    end
    local function does_things(a, b, c)
