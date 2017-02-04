@@ -135,6 +135,7 @@ inputSystem.mouse = {
 	["1"] = "shoot"
 }
 
+
 inputSystem.filter = tiny.requireAny("intents")
 function inputSystem:preWrap(dt)
 	self.m_x, self.m_y = love.mouse.getPosition()

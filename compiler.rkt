@@ -11,7 +11,7 @@
 
 (define-splicing-syntax-class cst/varlist
   (pattern
-   ({~literal varlist} (~seq vs:cst/var ...))
+   ({~literal varlist} (~or vs:cst/var {~datum ","}) ...)
    #:with expr #'(vs.expr ...)))
 
 (define-splicing-syntax-class cst/namelist
@@ -288,7 +288,9 @@
    #:with expr
    (cond
      [(and (attribute eifs.expr) (attribute eblk.expr))
-      #'(if e.expr (begin #f blk.expr) (eifs.expr ...) eblk.expr #t)]
+      #'(if e.expr (begin #f blk.expr) (eifs.expr ...) (begin #f eblk.expr) #t)]
+     [(attribute eblk.expr)
+      #'(if e.expr (begin #f blk.expr) () (begin #f eblk.expr) #t)]
      [(attribute eifs.expr)
       #'(if e.expr (begin #f blk.expr) (eifs.expr ...) #f #t)]
      [else
@@ -341,7 +343,7 @@
      (~bind [a
              (if (attribute args.expr)
                  (datum->syntax #f (append (list 'self) (syntax-e #'args.expr)))
-                 (list 'self))])
+                 #'(self))])
      {~datum ")"}
      blk:cst/block {~datum "end"}))
    #:with expr #'(assign #f ((access #f var mem)) ((fn a (begin #f blk.expr)))))
@@ -495,7 +497,7 @@
            (define els
              (match s?
                [#f ""]
-               [es (format "else ~n~a~n" (Stmt s?))]))
+               [es (format "~nelse ~n~a~n" (Stmt s?))]))
            (define eifs
              (string-join
               (for/list ([stmt s*])
