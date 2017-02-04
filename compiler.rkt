@@ -334,7 +334,7 @@
     fnbody:cst/funcbody)
    #:with expr #'(begin
                    #f
-                   ((assign #t (fname))
+                   ((assign #t (fname) ())
                     (assign #f (fname) (fnbody.expr)))))
   ; this botch is just to match the function:thing() pattern, everything else mimics the grammar
   (pattern
@@ -363,7 +363,7 @@
    #:with expr
    (if (attribute es.expr)
        #'(assign #t ns.expr es.expr)
-       #'(assign #t ns.expr))))
+       #'(assign #t ns.expr ()))))
 
 (define (new-cst->ast cst)
   `(begin #f
@@ -380,8 +380,7 @@
    (variable (x))
    (operator (o)))
   (Stmt (s)
-        (assign c (e0* ... e0) (e1* ... e1))
-        (assign c (e0* ... e0))
+        (assign c (e0* ... e0) (e1* ...))
         (while e s)
         (repeat s e)
         (if e s (s* ...) s? c?)
@@ -419,11 +418,11 @@
   (definitions)
   (Stmt : Stmt (ir) -> Stmt ()
         ;; turns x, y += 10,24 into x, y = x + 10, y + 24
-        [(op-assign ,c ,o (,e0* ... ,e0) (,[e1*] ... ,[e1]))
+        [(op-assign ,c ,o (,e0* ... ,e0) (,[e1*] ...))
          (begin
            (define ops
              (with-output-language (Lua Expr)
-              (for/list ([lhs (cons e0 e0*)] [rhs (cons e1 e1*)])
+               (for/list ([lhs (cons e0 e0*)] [rhs (cons e1* '())])
                 `(binop ,o ,lhs ,rhs))))
            `(assign ,c (,e0* ... ,e0) (,(cdr ops) ... ,(car ops))))]
         ;; TODO: forms the case for expressions like x, y += call()
@@ -479,15 +478,15 @@
         [(,e* ... ,e)
          (format-list e e* #:sep ", ")])
   (Stmt : Stmt(ir) -> *()
-        [(assign ,c (,e0* ... ,e0) (,e1* ... ,e1))
-         (format "~a~a = ~a"
-                 (if c "local " "")
-                 (format-list e0 e0* #:sep ", ")
-                 (format-list e1 e1* #:sep ", "))]
-        [(assign ,c (,e0* ... ,e0))
-         (format "~a~a"
-                 (if c "local " "")
-                 (format-list e0 e0* #:sep ", "))]
+        [(assign ,c (,e0* ... ,e0) (,e1* ...))
+         (if (empty? e1*)
+             (format "~a~a"
+                     (if c "local " "")
+                     (format-list e0 e0* #:sep ", "))
+             (format "~a~a = ~a"
+                     (if c "local " "")
+                     (format-list e0 e0* #:sep ", ")
+                     (format-list '() e1* #:sep ", ")))]
         [(if ,e ,s (,s* ...) ,s? ,c?)
          (begin
            (define els
