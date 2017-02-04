@@ -332,7 +332,10 @@
     {~datum "function"}
     fname:id
     fnbody:cst/funcbody)
-   #:with expr #'(assign #t (fname) (fnbody.expr)))
+   #:with expr #'(begin
+                   #f
+                   ((assign #t (fname))
+                    (assign #f (fname) (fnbody.expr)))))
   ; this botch is just to match the function:thing() pattern, everything else mimics the grammar
   (pattern
    ({~literal stat}
@@ -356,8 +359,11 @@
   (pattern
    ({~literal stat}
     {~datum "local"}
-    ns:cst/namelist {~datum "="} es:cst/explist)
-  #:with expr #'(assign #t ns.expr es.expr)))
+    ns:cst/namelist (~optional (~seq {~datum "="} es:cst/explist)))
+   #:with expr
+   (if (attribute es.expr)
+       #'(assign #t ns.expr es.expr)
+       #'(assign #t ns.expr))))
 
 (define (new-cst->ast cst)
   `(begin #f
@@ -375,6 +381,7 @@
    (operator (o)))
   (Stmt (s)
         (assign c (e0* ... e0) (e1* ... e1))
+        (assign c (e0* ... e0))
         (while e s)
         (repeat s e)
         (if e s (s* ...) s? c?)
@@ -477,6 +484,10 @@
                  (if c "local " "")
                  (format-list e0 e0* #:sep ", ")
                  (format-list e1 e1* #:sep ", "))]
+        [(assign ,c (,e0* ... ,e0))
+         (format "~a~a"
+                 (if c "local " "")
+                 (format-list e0 e0* #:sep ", "))]
         [(if ,e ,s (,s* ...) ,s? ,c?)
          (begin
            (define els

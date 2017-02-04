@@ -196,3 +196,5 @@
  (generate-code
   (lower-op-assign
    (parse-L1 (new-cst->ast real-test-syntax)))))
+
+(displayln example-code)

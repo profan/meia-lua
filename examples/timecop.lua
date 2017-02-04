@@ -654,4 +654,7 @@ function game:quit()
 
 end
 
+local function some_shite()
+end
+
 return game
