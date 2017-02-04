@@ -192,7 +192,7 @@
 (pretty-test "TEST 3 ->" (lambda () (parse-L1 (new-cst->ast real-test-syntax))))
 (pretty-test "TEST 4 ->" (lambda () (lower-op-assign (parse-L1 (new-cst->ast real-test-syntax)))))
 
-(displayln
+(define example-code
  (generate-code
   (lower-op-assign
    (parse-L1 (new-cst->ast real-test-syntax)))))
