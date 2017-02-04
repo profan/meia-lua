@@ -43,7 +43,7 @@
    #:with expr
    (if (attribute elist.expr)
        #'elist.expr
-       #'#f))
+       '("")))
   (pattern
    ({~literal args}
     (~and arg
@@ -119,11 +119,11 @@
   (pattern
    (field
     {~datum "["} lhs:cst/expr {~datum "]"} {~datum "="} rhs:cst/expr)
-   #:with expr #'nil)
+   #:with expr #'(field #t lhs.expr rhs.expr))
   (pattern
    (field
     lhs:id {~datum "="} rhs:cst/expr)
-   #:with expr #'nil)
+   #:with expr #'(field #f lhs rhs.expr))
   (pattern
    (field
     e:cst/expr)
@@ -216,7 +216,8 @@
 (define-syntax-class cst/funcname
   (pattern
    ({~literal funcname}
-    v1:id (~optional (~seq {~datum "."} vs:id)) (~optional ({~datum ":"} v2:id)))
+    v1:id (~seq {~datum "."} vs:id) ...
+    (~optional (~seq {~datum ":"} v2:id)))
    #:with expr #'v1))
 
 (define-syntax-class cst/laststat
@@ -330,6 +331,20 @@
     fname:id
     fnbody:cst/funcbody)
    #:with expr #'(assign #t (fname) (fnbody.expr)))
+  ; this botch is just to match the function:thing() pattern, everything else mimics the grammar
+  (pattern
+   ({~literal stat}
+    {~datum "function"}
+    ({~literal funcname} var:id {~datum ":"} mem:id)
+    ({~literal funcbody}
+     {~datum "("} (~optional args:cst/parlist)
+     (~bind [a
+             (if (attribute args.expr)
+                 (datum->syntax #f (append (list 'self) (syntax-e #'args.expr)))
+                 (list 'self))])
+     {~datum ")"}
+     blk:cst/block {~datum "end"}))
+   #:with expr #'(assign #f ((access #f var mem)) ((fn a (begin #f blk.expr)))))
   (pattern
    ({~literal stat}
     {~datum "function"}
@@ -357,7 +372,7 @@
    (variable (x))
    (operator (o)))
   (Stmt (s)
-        (assign c (x* ... x) (e* ... e))
+        (assign c (e0* ... e0) (e1* ... e1))
         (while e s)
         (repeat s e)
         (if e s (s* ...) s? c?)
@@ -374,6 +389,7 @@
         (call e e* ...)
         (access c e n)
         (index e0 e1)
+        (field c e0 e1)
         (table e* ...)
         (unop o e0)
         (binop o e0 e1)
@@ -386,7 +402,7 @@
   (extends Lua)
   (Stmt (s body)
         (+
-         (op-assign c o (x* ... x) e))))
+         (op-assign c o (e0* ... e0) e))))
 
 (define-parser parse-L1 L1)
 
@@ -394,19 +410,19 @@
   (definitions)
   (Stmt : Stmt (ir) -> Stmt ()
         ;; turns x, y += 10,24 into x, y = x + 10, y + 24
-        [(op-assign ,c ,o (,x* ... ,x) (,[e*] ... ,[e]))
+        [(op-assign ,c ,o (,e0* ... ,e0) (,[e1*] ... ,[e1]))
          (begin
            (define ops
              (with-output-language (Lua Expr)
-              (for/list ([lhs (cons x x*)] [rhs (cons e e*)])
+              (for/list ([lhs (cons e0 e0*)] [rhs (cons e1 e1*)])
                 `(binop ,o ,lhs ,rhs))))
-           `(assign ,c (,x* ... ,x) (,(cdr ops) ... ,(car ops))))]
+           `(assign ,c (,e0* ... ,e0) (,(cdr ops) ... ,(car ops))))]
         ;; TODO: forms the case for expressions like x, y += call()
         ;;  which here should become ...
         ;;  local tmp_x, tmp_y = call()
         ;;  x, y = x + tmp_x, y + tmp_y
-        [(op-assign ,c ,o (,x* ... ,x) ,[e])
-         `(assign ,c (,x* ... ,x) (,e))])
+        [(op-assign ,c ,o (,e0* ... ,e0) ,[e])
+         `(assign ,c (,e0* ... ,e0) (,e))])
   (Stmt ir))
 
 ; (language->s-expression Lua)
@@ -456,6 +472,10 @@
          (format "~a ~a ~a" (Expr e1) o (Expr e2))]
         [(table ,e* ...)
          (format "{~a}" (format-list '() e* #:sep ", "))]
+        [(field ,c ,e0, e1)
+         (if c
+             (format "[~a] = ~a" (Expr e0) (Expr 1))
+             (format "~a = ~a" (Expr e0) (Expr e1)))]
         [(index ,e0 ,e1)
          (format "~a[~a]" (Expr e0) (Expr e1))]
         [(access ,c ,e ,n)
@@ -465,11 +485,11 @@
         [(,e* ... ,e)
          (format-list e e* #:sep ", ")])
   (Stmt : Stmt(ir) -> *()
-        [(assign ,c (,x* ... ,x) (,e* ... ,e))
+        [(assign ,c (,e0* ... ,e0) (,e1* ... ,e1))
          (format "~a~a = ~a"
                  (if c "local " "")
-                 (format-list x x* #:sep ", ")
-                 (format-list e e* #:sep ", "))]
+                 (format-list e0 e0* #:sep ", ")
+                 (format-list e1 e1* #:sep ", "))]
         [(if ,e ,s (,s* ...) ,s? ,c?)
          (begin
            (define els
@@ -639,6 +659,10 @@
        return upvalue, ...
      end
    end
+   hello.world = 25
+   function something:shitty(a, b, c)
+     return a, b, c
+   end
    shooter:shoot_things(32):reduce(42)
    function more_variadic_things(f, g, h, ...)
      return 42
@@ -663,13 +687,13 @@
   (pretty-print (thunky))
   (displayln ""))
 
-(pretty-test "SYNTAX ->" (lambda () (syntax->datum new-test-syntax)))
+(pretty-test "SYNTAX ->" (lambda () (syntax->datum real-test-syntax)))
 (pretty-test "TEST 1 ->" (lambda () (parse-L1 '(assign #t (x y) (10 24)))))
-(pretty-test "TEST 2 ->" (lambda () (new-cst->ast new-test-syntax)))
-(pretty-test "TEST 3 ->" (lambda () (parse-L1 (new-cst->ast new-test-syntax))))
-(pretty-test "TEST 4 ->" (lambda () (lower-op-assign (parse-L1 (new-cst->ast new-test-syntax)))))
+(pretty-test "TEST 2 ->" (lambda () (new-cst->ast real-test-syntax)))
+(pretty-test "TEST 3 ->" (lambda () (parse-L1 (new-cst->ast real-test-syntax))))
+(pretty-test "TEST 4 ->" (lambda () (lower-op-assign (parse-L1 (new-cst->ast real-test-syntax)))))
 
 (displayln
  (generate-code
   (lower-op-assign
-   (parse-L1 (new-cst->ast new-test-syntax)))))
+   (parse-L1 (new-cst->ast real-test-syntax)))))

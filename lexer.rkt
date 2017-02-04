@@ -60,7 +60,7 @@
      ("false" FALSE)
      ("nil" NIL))))
 
-(define id-regexp "(\\p{L}|\\_)+")
+(define id-regexp "(\\p{L}|\\_)+(\\p{L}|\\_|\\p{N})*")
 
 (define (name? n)
   (define id-p (pregexp id-regexp))
@@ -108,6 +108,8 @@
       (token 'STR lexeme)]
      [(:: "'" (:* (:- any-char "'")) "'")
       (token 'STR lexeme)]
+     [(:: "--[[" (:* (:- any-string "--[[")) "]]--")
+      (token 'COMMENT lexeme #:skip? #t)]
      [(:: "--" (repetition 1 +inf.0 (:~ "\n")))
       (token 'COMMENT lexeme #:skip? #t)]
      [whitespace
