@@ -11,23 +11,23 @@
 
 (define-splicing-syntax-class cst/varlist
   (pattern
-   ({~literal varlist} (~or vs:cst/var {~datum ","}) ...)
+   ({~literal varlist} (~or vs:cst/var {~literal COMMA}) ...)
    #:with expr #'(vs.expr ...)))
 
 (define-splicing-syntax-class cst/namelist
   (pattern
-   ({~literal namelist} (~or {~datum ","} ns:id) ...)
+   ({~literal namelist} (~or {~literal COMMA} ns:id) ...)
    #:with expr #'(ns ...)))
 
 (define-syntax-class cst/explist
   (pattern
-   ({~literal explist} (~or {~datum ","} es:cst/expr) ...)
+   ({~literal explist} (~or {~literal COMMA} es:cst/expr) ...)
    #:with expr #'(es.expr ...)))
 
 (define-syntax-class cst/functioncall
   (pattern
    ({~literal functioncall}
-    pe:cst/prefixexp {~datum ":"} var:id args:cst/args)
+    pe:cst/prefixexp {~literal COLON} var:id args:cst/args)
    #:with expr #'(call (access #t pe.expr var) args.expr))
   (pattern
    ({~literal functioncall}
@@ -37,9 +37,9 @@
 (define-syntax-class cst/args
   (pattern
    ({~literal args}
-    {~datum "("}
+    {~literal LPAREN}
     (~optional elist:cst/explist)
-    {~datum ")"})
+    {~literal RPAREN})
    #:with expr
    (if (attribute elist.expr)
        #'elist.expr
@@ -58,13 +58,13 @@
 (define-syntax-class cst/function
   (pattern
    ({~literal function}
-    {~datum "function"} fn:cst/funcbody)
+    {~literal FUNCTION} fn:cst/funcbody)
    #:with expr #'fn.expr))
 
 (define-syntax-class cst/funcbody
   (pattern
    ({~literal funcbody}
-    {~datum "("} (~optional args:cst/parlist) {~datum ")"} blk:cst/block {~datum "end"})
+    {~literal LPAREN} (~optional args:cst/parlist) {~literal RPAREN} blk:cst/block {~literal END})
    #:with expr
    (if (attribute args.expr)
        #'(fn args.expr (begin #f blk.expr))
@@ -72,12 +72,12 @@
 
 (define-syntax-class cst/parlist
   (pattern
-   ({~literal parlist} {~datum "..."})
+   ({~literal parlist} {~literal VARIADIC})
    #:with expr '(...))
   (pattern
    ({~literal parlist}
     ns:cst/namelist
-    (~optional (~seq {~datum ","} (~and v {~datum "..."}))))
+    (~optional (~seq {~literal COMMA} (~and v {~literal VARIADIC}))))
    #:with expr
    (begin
      (if (attribute v)
@@ -97,13 +97,13 @@
    #:with expr #'fn.expr)
   (pattern
    ({~literal prefixexp}
-    {~datum "("} e:cst/expr {~datum ")"})
+    {~literal LPAREN} e:cst/expr {~literal RPAREN})
    #:with expr #'(par e.expr)))
 
 (define-syntax-class cst/tableconstructor
   (pattern
    ({~literal tableconstructor}
-    {~datum "{"} (~optional fs:cst/fieldlist) {~datum "}"})
+    {~literal LBRACKET} (~optional fs:cst/fieldlist) {~literal RBRACKET})
    #:with expr
    (if (attribute fs.expr)
        #'(table fs.expr)
@@ -118,11 +118,11 @@
 (define-syntax-class cst/field
   (pattern
    (field
-    {~datum "["} lhs:cst/expr {~datum "]"} {~datum "="} rhs:cst/expr)
+    {~literal LSQUARE} lhs:cst/expr {~literal RSQUARE} {~literal EQ} rhs:cst/expr)
    #:with expr #'(field #t lhs.expr rhs.expr))
   (pattern
    (field
-    lhs:id {~datum "="} rhs:cst/expr)
+    lhs:id {~literal EQ} rhs:cst/expr)
    #:with expr #'(field #f lhs rhs.expr))
   (pattern
    (field
@@ -133,28 +133,28 @@
   (pattern
    ({~literal fieldsep}
     (~or
-     {~datum ","}
-     {~datum ";"}))))
+     {~literal COMMA}
+     {~literal SEMICOLON}))))
 
 (define-syntax-class cst/binop
   (pattern
    ({~literal binop}
     (~and op
           (~or
-           {~datum "+"}
-           {~datum "-"}
-           {~datum "*"}
-           {~datum "/"}
-           {~datum "%"}
-           {~datum ".."}
-           {~datum "<"}
-           {~datum "<="}
-           {~datum ">"}
-           {~datum ">="}
-           {~datum "=="}
-           {~datum "~="}
-           {~datum "and"}
-           {~datum "or"})))
+           {~literal ADD}
+           {~literal SUB}
+           {~literal MUL}
+           {~literal DIV}
+           {~literal MOD}
+           {~literal CONCAT}
+           {~literal LT}
+           {~literal LTEQ}
+           {~literal GT}
+           {~literal GTEQ}
+           {~literal EQEQ}
+           {~literal NEQ}
+           {~literal AND}
+           {~literal OR})))
    #:with expr #'op))
 
 (define-syntax-class cst/unop
@@ -162,21 +162,21 @@
    ({~literal unop}
     (~and op
           (~or
-           {~datum "-"}
-           {~datum "not"}
-           {~datum "#"})))
-   #:with expr (syntax->datum #'op)))
+           {~literal SUB}
+           {~literal NOT}
+           {~literal LEN})))
+   #:with expr #'op))
 
 (define-syntax-class cst/expr
   (pattern
    (exp
     (~and s
           (~or
-           {~datum "nil"}
-           {~datum "false"}
-           {~datum "true"}
-           {~datum "..."})))
-   #:with expr (string->symbol (syntax->datum #'s)))
+           {~literal NIL}
+           {~literal FALSE}
+           {~literal TRUE}
+           {~literal VARIADIC})))
+   #:with expr #'s)
   (pattern
    (exp n:number)
    #:with expr #'n)
@@ -206,43 +206,43 @@
    #:with expr #'v)
   (pattern
    ({~literal var}
-    pe:cst/prefixexp {~datum "["} e:cst/expr {~datum "]"})
+    pe:cst/prefixexp {~literal LSQUARE} e:cst/expr {~literal RSQUARE})
    #:with expr #'(index pe.expr e.expr))
   (pattern
    ({~literal var}
-    pe:cst/prefixexp {~datum "."} v:id)
+    pe:cst/prefixexp {~literal PERIOD} v:id)
    #:with expr #'(access #f pe.expr v)))
 
 (define-syntax-class cst/funcname
   (pattern
    ({~literal funcname}
-    v1:id (~seq {~datum "."} vs:id) ...
-    (~optional (~seq {~datum ":"} v2:id)))
+    v1:id (~seq {~literal PERIOD} vs:id) ...
+    (~optional (~seq {~literal COLON} v2:id)))
    #:with expr #'v1))
 
 (define-syntax-class cst/laststat
   (pattern
    ({~literal laststat}
-    {~datum "return"} es:cst/explist)
+    {~literal RETURN} es:cst/explist)
    #:with expr #'(ret es.expr))
   (pattern
    ({~literal laststat}
-    {~datum "return"})
+    {~literal RETURN})
    #:with expr #'(ret))
   (pattern
    ({~literal laststat}
-    {~datum "break"})
+    {~literal BREAK})
    #:with expr #'(break)))
 
 (define-syntax-class cst/chunk
   (pattern
    ({~literal chunk}
-    laststmt:cst/laststat (~optional {~datum ";"}))
+    laststmt:cst/laststat (~optional {~literal SEMICOLON}))
    #:with expr #'(laststmt.expr))
   (pattern
    ({~literal chunk}
-    (~or stmts:cst/stat {~datum ";"}) ...
-    (~optional (~seq laststmt:cst/laststat (~optional {~datum ";"}))))
+    (~or stmts:cst/stat {~literal SEMICOLON}) ...
+    (~optional (~seq laststmt:cst/laststat (~optional {~literal SEMICOLON}))))
    #:with expr
    (if (attribute laststmt.expr)
        #'(stmts.expr ... laststmt.expr)
@@ -255,18 +255,18 @@
 
 (define-syntax-class cst/local
   (pattern
-   {~datum "local"}
+   {~literal LOCAL}
    #:with expr #'#t))
 
 (define-splicing-syntax-class cst/elseif
   (pattern
-   (~seq {~datum "elseif"} e:cst/expr {~datum "then"} b:cst/block)
+   (~seq {~literal ELSEIF} e:cst/expr {~literal THEN} b:cst/block)
    #:with expr #'(if e.expr (begin #f b.expr) () #f #f)))
 
 (define-syntax-class cst/stat
   (pattern
    ({~literal stat}
-    vs:cst/varlist {~datum "="} es:cst/explist)
+    vs:cst/varlist {~literal EQ} es:cst/explist)
    #:with expr #'(assign #f vs.expr es.expr))
   (pattern
    ({~literal stat}
@@ -274,17 +274,17 @@
    #:with expr #'fncall.expr)
   (pattern
    ({~literal stat}
-    {~datum "repeat"} blk:cst/block {~datum "until"} cnd:cst/expr)
+    {~literal REPEAT} blk:cst/block {~literal UNTIL} cnd:cst/expr)
    #:with expr #'(repeat blk.expr cnd.expr))
   (pattern
    ({~literal stat}
-    {~datum "if"}
+    {~literal IF}
     e:cst/expr
-    {~datum "then"}
+    {~literal THEN}
     blk:cst/block
     eifs:cst/elseif ...
-    (~optional (~seq {~datum "else"} eblk:cst/block))
-    {~datum "end"})
+    (~optional (~seq {~literal ELSE} eblk:cst/block))
+    {~literal END})
    #:with expr
    (cond
      [(and (attribute eifs.expr) (attribute eblk.expr))
@@ -297,39 +297,39 @@
       #'(if e.expr (begin #f blk.expr) () #f #t)]))
   (pattern
    ({~literal stat}
-    {~datum "for"}
-    v:id {~datum "="}
-    exp1:cst/expr {~datum ","} exp2:cst/expr
-    (~optional (~seq {~datum ","} exp3:cst/expr))
-    {~datum "do"}
+    {~literal FOR}
+    v:id {~literal EQ}
+    exp1:cst/expr {~literal COMMA} exp2:cst/expr
+    (~optional (~seq {~literal COMMA} exp3:cst/expr))
+    {~literal DO}
     blk:cst/block
-    {~datum "end"})
+    {~literal END})
    #:with expr
    (if (attribute exp3.expr)
        #'(for v exp1.expr exp2.expr exp3.expr (begin #f blk.expr))
        #'(for v exp1.expr exp2.expr 1 (begin #f blk.expr))))
   (pattern
    ({~literal stat}
-    {~datum "for"}
+    {~literal FOR}
     ns:cst/namelist
-    {~datum "in"}
+    {~literal IN}
     es:cst/explist
-    {~datum "do"}
+    {~literal DO}
     blk:cst/block
-    {~datum "end"})
+    {~literal END})
    #:with expr #'(for ns.expr es.expr (begin #f blk.expr)))
   (pattern
    ({~literal stat}
-    {~datum "do"} blk:cst/block {~datum "end"})
+    {~literal DO} blk:cst/block {~literal END})
    #:with expr #'(begin #t blk.expr))
   (pattern
    ({~literal stat}
-    {~datum "while"} cnd:cst/expr {~datum "do"} blk:cst/block {~datum "end"})
+    {~literal WHILE} cnd:cst/expr {~literal DO} blk:cst/block {~literal END})
    #:with expr #'(while cnd.expr (begin #f blk.expr)))
   (pattern
    ({~literal stat}
-    {~datum "local"}
-    {~datum "function"}
+    {~literal LOCAL}
+    {~literal FUNCTION}
     fname:id
     fnbody:cst/funcbody)
    #:with expr #'(begin
@@ -339,27 +339,28 @@
   ; this botch is just to match the function:thing() pattern, everything else mimics the grammar
   (pattern
    ({~literal stat}
-    {~datum "function"}
-    ({~literal funcname} var:id {~datum ":"} mem:id)
+    {~literal FUNCTION}
+    ({~literal funcname} var:id {~literal COLON} mem:id)
     ({~literal funcbody}
-     {~datum "("} (~optional args:cst/parlist)
+     {~literal LPAREN} (~optional args:cst/parlist)
      (~bind [a
              (if (attribute args.expr)
                  (datum->syntax #f (append (list 'self) (syntax-e #'args.expr)))
                  #'(self))])
-     {~datum ")"}
-     blk:cst/block {~datum "end"}))
+     {~literal RPAREN}
+     blk:cst/block
+     {~literal END}))
    #:with expr #'(assign #f ((access #f var mem)) ((fn a (begin #f blk.expr)))))
   (pattern
    ({~literal stat}
-    {~datum "function"}
+    {~literal FUNCTION}
     fname:cst/funcname
     fnbody:cst/funcbody)
    #:with expr #'(assign #f (fname.expr) (fnbody.expr)))
   (pattern
    ({~literal stat}
-    {~datum "local"}
-    ns:cst/namelist (~optional (~seq {~datum "="} es:cst/explist)))
+    {~literal LOCAL}
+    ns:cst/namelist (~optional (~seq {~literal EQ} es:cst/explist)))
    #:with expr
    (if (attribute es.expr)
        #'(assign #t ns.expr es.expr)
@@ -460,9 +461,11 @@
         [(call ,e ,e* ...)
          (format "~a(~a)" (Expr e) (format-list '() e* #:sep ", "))]
         [(unop ,o ,e)
-         (format "~a ~a" o (Expr e))]
+         (let ([op-str (hash-ref operator-map o)])
+             (format "~a ~a" op-str (Expr e)))]
         [(binop ,o ,e1 ,e2)
-         (format "~a ~a ~a" (Expr e1) o (Expr e2))]
+         (let ([op-str (hash-ref operator-map o)])
+             (format "~a ~a ~a" (Expr e1) op-str (Expr e2)))]
         [(table ,e* ...)
          (format "{~a}" (format-list '() e* #:sep ", "))]
         [(field ,c ,e0, e1)
@@ -516,4 +519,4 @@
         [(break)
          (format "break")]))
 
-(provide parse-L1 new-cst->ast lower-op-assign generate-code parse)
+(provide parse-Lua parse-L1 new-cst->ast lower-op-assign generate-code parse)

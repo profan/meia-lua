@@ -23,10 +23,10 @@
 (parse-L1 '25)
 (parse-L1 '(assign #t (x) (10)))
 (parse-L1 '(assign #t (x y) (10 24)))
-(parse-L1 '(op-assign #t "+" (x) (25)))
-(lower-op-assign (parse-L1 '(op-assign #t "+" (x y z) (call print (25 32)))))
-(parse-L1 '(op-assign #t "+" (x) (binop "-" 35 25)))
-(lower-op-assign (parse-L1 '(op-assign #t "+" (x y) (24 (binop "-" 35 25)))))
+(parse-L1 '(op-assign #t ADD (x) (25)))
+(lower-op-assign (parse-L1 '(op-assign #t ADD (x y z) (call print (25 32)))))
+(parse-L1 '(op-assign #t ADD (x) (binop SUB 35 25)))
+(lower-op-assign (parse-L1 '(op-assign #t ADD (x y) (24 (binop SUB 35 25)))))
 (lower-op-assign (parse-L1 '(fn (x y z) (ret (32)))))
 (displayln
  (generate-code (lower-op-assign (parse-L1 '(fn (a b c) (begin #f ((ret (32)))))))))
@@ -37,14 +37,14 @@
   (lower-op-assign
    (parse-L1 '(begin #t
                      ((assign #t (x) (0))
-                      (while true (op-assign #f "+" (x) ((binop "*" 5 2))))))))))
+                      (while true (op-assign #f ADD (x) ((binop MUL 5 2))))))))))
 
 (displayln
  (generate-code
   (lower-op-assign
    (parse-L1 '(begin #t
                      ((assign #t (x y) (0 0))
-                      (while true (op-assign #f "+" (x y) ((binop "*" 32 16) 48)))
+                      (while true (op-assign #f ADD (x y) ((binop MUL 32 16) 48)))
                       (ret (32 24))))))))
 
 (displayln
