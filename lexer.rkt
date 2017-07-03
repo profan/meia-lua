@@ -130,7 +130,23 @@
       (token 'STR lexeme)]
      [(:: "'" (:* (:- any-char "'")) "'")
       (token 'STR lexeme)]
-     [(:: "--[[" (:* (:- any-string "--[[")) "]]--")
+     [(:: "--[[" (:* (:- any-string "--[[")) "]]")
+      (token 'COMMENT lexeme #:skip? #t)]
+     [(:: "--[=[" (:* (:- any-string "--[=[")) "]=]")
+      (token 'COMMENT lexeme #:skip? #t)]
+     [(:: "--[==[" (:* (:- any-string "--[==[")) "]==]")
+      (token 'COMMENT lexeme #:skip? #t)]
+     [(:: "--[===[" (:* (:- any-string "--[===[")) "]===]")
+      (token 'COMMENT lexeme #:skip? #t)]
+     [(:: "--[====[" (:* (:- any-string "--[====[")) "]====]")
+      (token 'COMMENT lexeme #:skip? #t)]
+     [(:: "--[=====[" (:* (:- any-string "--[=====[")) "]=====]")
+      (token 'COMMENT lexeme #:skip? #t)]
+     [(:: "--[======[" (:* (:- any-string "--[======[")) "]======]")
+      (token 'COMMENT lexeme #:skip? #t)]
+     [(:: "--[=======[" (:* (:- any-string "--[========[")) "]=======]")
+      (token 'COMMENT lexeme #:skip? #t)]
+     [(:: "--[========[" (:* (:- any-string "--[========[")) "]========]")
       (token 'COMMENT lexeme #:skip? #t)]
      [(:: "--" (repetition 1 +inf.0 (:~ "\n")))
       (token 'COMMENT lexeme #:skip? #t)]

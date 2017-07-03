@@ -35,4 +35,6 @@
   (when show? (printf "~a~n" example-code)))
 
 (compile-path "examples/timecop.lua" #f)
+(compile-path "examples/escapes.lua" #t)
+(compile-path "examples/multilinecomments.lua" #t)
 (compile-path "examples/test.lua" #t)
