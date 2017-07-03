@@ -622,7 +622,7 @@ function game:draw()
 	self.world:update(dt, drawSystemFilter)
 
 	self.camera:detach()
-	
+
 	self.world:update(dt, hudSystemFilter)
 
 end

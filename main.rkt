@@ -28,5 +28,11 @@
   (printf "codegen took: ~a milliseconds ~n" lua-time)
   lua-code)
 
-(define-values (example-code example-time) (time (lambda () (compile "examples/timecop.lua"))))
-(printf "total time: ~a milliseconds to compile. ~n" example-time)
+(define (compile-path path show?)
+  (printf "compiling: ~a ~n" path)
+  (define-values (example-code example-time) (time (lambda () (compile path))))
+  (printf "total time: ~a milliseconds to compile ~n ~n" example-time)
+  (when show? (printf "~a~n" example-code)))
+
+(compile-path "examples/timecop.lua" #f)
+(compile-path "examples/test.lua" #t)
